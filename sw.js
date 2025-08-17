@@ -1,7 +1,15 @@
-const CACHE = "budget-v1";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./app.js", "./db.js"];
-
-
+// sw.js — Service Worker pour cache offline
+const CACHE = "budget-v2"; // bump si tu modifies la liste
+const ASSETS = [
+  "./",
+  "./index.html",
+  "./manifest.webmanifest",
+  "./app.js",
+  "./db.js",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png",
+  "./icons/apple-touch-icon.png"
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
@@ -30,4 +38,3 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
-
