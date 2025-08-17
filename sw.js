@@ -1,5 +1,7 @@
 const CACHE = "budget-v1";
-const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./app.js"];
+const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./app.js", "./db.js"];
+
+
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
