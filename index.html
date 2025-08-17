@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Budget & Épargne (auto-allocation par enveloppe)</title>
+<title>Budget & Épargne – auto-allocation</title>
 <style>
   :root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--ring:#e5e7eb;--accent:#2563eb;--good:#16a34a;--bad:#ef4444}
   *{box-sizing:border-box}
@@ -14,10 +14,9 @@
   nav button{flex:1;padding:12px 10px;border:none;background:#1f2937;color:#fff;cursor:pointer;font-size:16px}
   nav button.active{background:#0b1220;font-weight:600}
   .wrap{max-width:1100px;margin:0 auto;padding:16px}
-  .page{display:none}
-  .page.active{display:block}
+  .page{display:none}.page.active{display:block}
   .grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:1000px){.grid{grid-template-columns:1.2fr .8fr}}
+  @media(min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
   .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
   h2{margin:0 0 10px 0;font-size:18px}
   input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ring);font-size:16px;background:#fff}
@@ -36,7 +35,7 @@
 </style>
 </head>
 <body>
-<header><h1>Gestionnaire de Budget & Épargne</h1></header>
+<header><h1>Budget & Épargne – auto-allocation</h1></header>
 <nav>
   <button id="btnBudget" class="active" onclick="showPage('budget')">💰 Budget</button>
   <button id="btnEpargne" onclick="showPage('epargne')">📊 Épargne & Projets</button>
@@ -46,89 +45,63 @@
   <!-- PAGE BUDGET -->
   <div id="budget" class="page active">
     <div class="grid">
-      <div class="grid-col">
-        <div class="card">
-          <h2>1) Salaire & Autres revenus</h2>
-          <div class="row">
-            <input id="salaireInput" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)"/>
-            <button class="btn" onclick="saveSalaire()">Enregistrer</button>
-          </div>
-          <div class="row">
-            <input id="revenuInput" type="number" inputmode="decimal" placeholder="Autre revenu ponctuel (DZD)"/>
-            <button class="btn" onclick="addRevenu()">Ajouter revenu</button>
-          </div>
-          <p id="salaireAffiche" class="muted"></p>
+      <div class="card">
+        <h2>1) Revenus</h2>
+        <div class="row">
+          <input id="salaireInput" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)"/>
+          <button class="btn" onclick="saveSalaire()">Enregistrer</button>
         </div>
-
-        <div class="card">
-          <h2>2) Enveloppes de DÉPENSES (budgets)</h2>
-          <div class="row">
-            <input id="depNom" placeholder="Nom (Courses, Véhicule, Scolaire…)"/>
-            <input id="depMontant" type="number" inputmode="decimal" placeholder="Budget mensuel (DZD)"/>
-            <button class="btn" onclick="addDepenseEnv()">Ajouter</button>
-          </div>
-          <table class="table">
-            <thead><tr><th>Enveloppe</th><th class="right">Budget</th><th></th></tr></thead>
-            <tbody id="depBody"></tbody>
-          </table>
-          <p><span class="pill">Total dépenses budgétées : <span id="depTotal">0</span> DZD</span></p>
+        <div class="row">
+          <input id="revenuInput" type="number" inputmode="decimal" placeholder="Autre revenu ponctuel (DZD)"/>
+          <button class="btn" onclick="addRevenu()">Ajouter revenu</button>
         </div>
-
-        <div class="card">
-          <h2>3) Dépenses effectives (mois en cours)</h2>
-          <div class="row">
-            <select id="txCat"></select>
-            <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
-          </div>
-          <div class="row">
-            <input id="txNote" placeholder="Note (facultatif)"/>
-            <input id="txDate" type="date"/>
-          </div>
-          <div class="row">
-            <button class="btn" onclick="addDepenseTx()">Ajouter dépense</button>
-            <button class="danger" onclick="clearDepenseTx()">Vider l'historique</button>
-          </div>
-          <table class="table">
-            <thead><tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr></thead>
-            <tbody id="txBody"></tbody>
-          </table>
-        </div>
+        <p id="revenusInfo" class="muted"></p>
       </div>
 
-      <div class="grid-col">
-        <div class="card">
-          <h2>Dashboard</h2>
-          <p class="muted"><span class="tag" id="nowMonth"></span></p>
-          <p>Salaire + revenus : <strong id="dashRevenus">—</strong></p>
-          <p>Total dépenses budgétées : <strong id="dashDepBudg">—</strong></p>
-          <p>Total dépensé (mois) : <strong id="dashDepense">—</strong></p>
-          <p>Épargne théorique (revenus − dépenses) : <strong id="dashTheoSave">—</strong></p>
-          <p>Épargne allouée (toutes enveloppes épargne) : <strong id="dashSavAlloue">—</strong></p>
-          <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
-          <div class="bar"><i id="barSpent"></i></div>
-          <p class="muted">% dépensé vs revenus (mois courant).</p>
+      <div class="card">
+        <h2>2) Enveloppes d’ÉPARGNE (création)</h2>
+        <div class="row">
+          <input id="savNom" placeholder="Nom (Aménagement, Voyage, Sécurité, Or…)"/>
+          <button class="btn" onclick="addSavEnv()">Créer enveloppe</button>
         </div>
+        <table class="table">
+          <thead><tr><th>Enveloppe</th><th class="right">Total versé</th><th></th></tr></thead>
+          <tbody id="savBody"></tbody>
+        </table>
+        <p><span class="pill">Total épargne versée : <span id="savTotal">0</span> DZD</span></p>
 
-        <div class="card">
-          <h2>4) Enveloppes d’ÉPARGNE</h2>
-          <div class="row">
-            <input id="savNom" placeholder="Nom (Aménagement, Voyage, Sécurité, Or…)"/>
-            <button class="btn" onclick="addSavEnv()">Créer enveloppe d’épargne</button>
-          </div>
-          <table class="table">
-            <thead><tr><th>Enveloppe</th><th class="right">Total versé</th><th></th></tr></thead>
-            <tbody id="savBody"></tbody>
-          </table>
-          <p><span class="pill">Total épargne versée : <span id="savTotal">0</span> DZD</span></p>
-
-          <h3 style="margin-top:16px">Versement dans une enveloppe d’épargne</h3>
-          <div class="row">
-            <select id="savSelect"></select>
-            <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant à verser (DZD)"/>
-            <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
-          </div>
-          <p class="muted">Le versement est automatiquement réparti entre les projets <em>liés à cette enveloppe</em> jusqu’à atteindre leurs objectifs.</p>
+        <h3 style="margin-top:12px">Versement → auto-répartition vers projets liés</h3>
+        <div class="row">
+          <select id="savSelect"></select>
+          <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
+          <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
         </div>
+        <p class="muted">FIFO : les projets les plus anciens de l’enveloppe sont complétés en premier.</p>
+      </div>
+
+      <div class="card">
+        <h2>3) Enveloppes de DÉPENSES (facultatif)</h2>
+        <div class="row">
+          <input id="depNom" placeholder="Nom (Courses, Véhicule, Scolaire…)"/>
+          <input id="depMontant" type="number" inputmode="decimal" placeholder="Budget mensuel (DZD)"/>
+          <button class="btn" onclick="addDepenseEnv()">Ajouter</button>
+        </div>
+        <table class="table">
+          <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
+          <tbody id="depBody"></tbody>
+        </table>
+        <p><span class="pill">Total dépenses budgétées : <span id="depTotal">0</span> DZD</span></p>
+      </div>
+
+      <div class="card">
+        <h2>4) Dashboard</h2>
+        <p class="muted"><span class="tag" id="nowMonth"></span></p>
+        <p>Total revenus (salaire + extras) : <strong id="dashRevenus">—</strong></p>
+        <p>Total dépenses budgétées : <strong id="dashDepBudg">—</strong></p>
+        <p>Épargne versée (toutes enveloppes) : <strong id="dashSavAlloue">—</strong></p>
+        <p>Reste indicatif (revenus − budgets dépenses − épargne versée) : <strong id="dashLeft">—</strong></p>
+        <div class="bar"><i id="barSpent"></i></div>
+        <p class="muted">La barre représente l’épargne versée en % des revenus.</p>
       </div>
     </div>
   </div>
@@ -136,16 +109,16 @@
   <!-- PAGE ÉPARGNE & PROJETS -->
   <div id="epargne" class="page">
     <div class="card">
-      <h2>Projets d’épargne (liés à une enveloppe)</h2>
+      <h2>Projets (liés à une enveloppe d’épargne)</h2>
       <div class="row">
         <select id="projEnv"></select>
-        <input id="projNom" placeholder="Nom du projet (ex: Meuble salle de bain, Voyage Paris…)"/>
+        <input id="projNom" placeholder="Nom du projet (ex: Meuble salle de bain)"/>
       </div>
       <div class="row">
-        <input id="projPrix" type="number" inputmode="decimal" placeholder="Prix / objectif (DZD)"/>
+        <input id="projPrix" type="number" inputmode="decimal" placeholder="Objectif (DZD)"/>
         <button class="btn" onclick="addProjet()">Créer projet</button>
       </div>
-      <p class="muted">⚙️ Le projet sera alimenté automatiquement par les versements de son enveloppe (FIFO : les plus anciens projets sont complétés d’abord).</p>
+      <p class="muted">Chaque versement sur l’enveloppe choisie alimente automatiquement ses projets jusqu’à atteindre leurs objectifs (statut vert ✅).</p>
 
       <table class="table">
         <thead><tr><th>Projet</th><th>Enveloppe</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th></th></tr></thead>
@@ -156,37 +129,34 @@
 </div>
 
 <script>
-/* ========= State & Storage ========= */
+/* ========= State ========= */
 const $ = id => document.getElementById(id);
 const fmt = n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0))+" DZD";
 const just = n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
-const today = () => new Date().toISOString().slice(0,10);
-const ymNow = () => new Date().toISOString().slice(0,7);
 
 let SALAIRE = Number(localStorage.getItem("SALAIRE")||0);
 let REVENUS_SUPP = Number(localStorage.getItem("REVENUS_SUPP")||0);
 
-// Enveloppes de dépenses (budgets mensuels “cibles”)
-let DEP_ENV = JSON.parse(localStorage.getItem("DEP_ENV")||"[]");      // {id,name,budget}
-let DEP_TX  = JSON.parse(localStorage.getItem("DEP_TX")||"[]");       // {id,date,catId,amount,note}
+// Épargne – enveloppes & versements
+let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");  // {id,name,totalIn}
+let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");   // {id,date,envId,amount}
 
-// Enveloppes d’épargne
-let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");      // {id,name,totalIn}
-let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");       // {id,date,envId,amount}
+// Projets liés à enveloppes
+let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");     // {id,name,envId,target,saved,done}
+let PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");  // {id,date,projectId,amount,envId}
 
-// Projets liés à une enveloppe
-let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");         // {id,name,envId,target,saved,done}
-let PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");      // {id,date,projectId,amount,envId}
+// Dépenses budgétées (facultatif)
+let DEP_ENV = JSON.parse(localStorage.getItem("DEP_ENV")||"[]");  // {id,name,budget}
 
+/* ========= Persist ========= */
 function persist(){
   localStorage.setItem("SALAIRE",SALAIRE);
   localStorage.setItem("REVENUS_SUPP",REVENUS_SUPP);
-  localStorage.setItem("DEP_ENV",JSON.stringify(DEP_ENV));
-  localStorage.setItem("DEP_TX",JSON.stringify(DEP_TX));
   localStorage.setItem("SAV_ENV",JSON.stringify(SAV_ENV));
   localStorage.setItem("SAV_TX",JSON.stringify(SAV_TX));
   localStorage.setItem("PROJ",JSON.stringify(PROJ));
   localStorage.setItem("PROJ_TX",JSON.stringify(PROJ_TX));
+  localStorage.setItem("DEP_ENV",JSON.stringify(DEP_ENV));
 }
 
 /* ========= Navigation ========= */
@@ -197,186 +167,108 @@ function showPage(id){
   (id==="budget"?$("btnBudget"):$("btnEpargne")).classList.add("active");
 }
 
-/* ========= Helpers calcul ========= */
-function totalDepenseMonth(ym){
-  return DEP_TX.filter(t=> (t.date||"").slice(0,7)===ym).reduce((s,t)=>s+Number(t.amount||0),0);
-}
-function spentByCatMonth(ym){
-  const m={};
-  for(const t of DEP_TX){
-    if((t.date||"").slice(0,7)!==ym) continue;
-    m[t.catId]=(m[t.catId]||0)+Number(t.amount||0);
-  }
-  return m;
-}
+/* ========= Calculs ========= */
 function sumDepBudgets(){ return DEP_ENV.reduce((s,c)=>s+Number(c.budget||0),0); }
-function totalRevenus(){ return (Number(SALAIRE)||0)+(Number(REVENUS_SUPP)||0); }
+function totalRevenus(){ return (Number(SALAIRE)||0) + (Number(REVENUS_SUPP)||0); }
 function totalSavAlloue(){ return SAV_ENV.reduce((s,e)=> s + Number(e.totalIn||0), 0); }
-function theoSave(ym){ return Math.max(0, totalRevenus() - totalDepenseMonth(ym)); }
-function leftToAllocate(ym){ return Math.max(0, theoSave(ym) - totalSavAlloue()); }
 
-/* ========= UI: Budget ========= */
+/* ========= UI: Revenus ========= */
 function saveSalaire(){
   const v = Number(($("salaireInput").value||0));
-  if(!v) return alert("Entre un salaire valide.");
-  SALAIRE=v; persist(); renderBudgetAll();
+  if(!v){ alert("Salaire invalide."); return; }
+  SALAIRE=v; $("salaireInput").value="";
+  persist(); renderAll();
 }
 function addRevenu(){
   const v = Number(($("revenuInput").value||0));
-  if(!v) return alert("Montant invalide.");
+  if(!v){ alert("Montant de revenu invalide."); return; }
   REVENUS_SUPP += v; $("revenuInput").value="";
-  persist(); renderBudgetAll();
+  persist(); renderAll();
 }
 
-function addDepenseEnv(){
-  const name = ($("depNom").value||"").trim();
-  const bud  = Number(($("depMontant").value||0));
-  if(!name || !bud) return alert("Nom et budget requis.");
-  DEP_ENV.push({id:crypto.randomUUID(),name,budget:bud});
-  $("depNom").value=""; $("depMontant").value="";
-  persist(); renderBudgetAll();
-}
-
-function delDepenseEnv(id){
-  // supprime dépenses liées
-  DEP_TX = DEP_TX.filter(t=>t.catId!==id);
-  DEP_ENV = DEP_ENV.filter(e=>e.id!==id);
-  persist(); renderBudgetAll();
-}
-
-function addDepenseTx(){
-  if(!DEP_ENV.length) return alert("Crée d'abord une enveloppe de dépenses.");
-  const catId = $("txCat").value;
-  const amount = Number(($("txAmount").value||0));
-  if(!amount || amount<=0) return alert("Montant invalide.");
-  DEP_TX.push({id:crypto.randomUUID(),date:$("txDate").value||today(),catId,amount,note:($("txNote").value||"").trim()});
-  $("txAmount").value=""; $("txNote").value="";
-  persist(); renderBudgetAll();
-}
-function clearDepenseTx(){
-  if(!confirm("Supprimer tout l'historique des dépenses ?")) return;
-  DEP_TX=[]; persist(); renderBudgetAll();
-}
-
-/* ========= UI: Épargne ========= */
+/* ========= UI: Épargne – enveloppes ========= */
 function addSavEnv(){
   const name = ($("savNom").value||"").trim();
-  if(!name) return alert("Nom requis.");
+  if(!name){ alert("Nom d’enveloppe requis."); return; }
   SAV_ENV.push({id:crypto.randomUUID(),name,totalIn:0});
   $("savNom").value="";
-  persist(); renderBudgetAll(); renderEpargneAll();
+  persist(); renderAll();
 }
-
 function delSavEnv(id){
-  // supprime versements (on garde l’historique projet mais ce n’est pas bloquant)
+  // Supprime enveloppe + versements + projets & tx liés
   SAV_TX = SAV_TX.filter(t=>t.envId!==id);
-  // supprime projets liés + tx projets liés
   const projIds = PROJ.filter(p=>p.envId===id).map(p=>p.id);
   PROJ_TX = PROJ_TX.filter(x=> !projIds.includes(x.projectId));
   PROJ = PROJ.filter(p=>p.envId!==id);
-  // supprime enveloppe
   SAV_ENV = SAV_ENV.filter(e=>e.id!==id);
-  persist(); renderBudgetAll(); renderEpargneAll();
+  persist(); renderAll();
 }
 
+/* — Versement + auto-répartition (FIFO) — */
 function verserEpargne(){
-  if(!SAV_ENV.length) return alert("Crée d'abord une enveloppe d’épargne.");
+  if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("savSelect").value;
   const amount = Number(($("savVersement").value||0));
-  if(!amount || amount<=0) return alert("Montant invalide.");
-  // Enregistre le versement dans enveloppe
-  SAV_TX.push({id:crypto.randomUUID(),date:today(),envId,amount});
+  if(!amount){ alert("Montant invalide."); return; }
+  // log enveloppe
+  SAV_TX.push({id:crypto.randomUUID(),date:new Date().toISOString().slice(0,10),envId,amount});
   const env = SAV_ENV.find(e=>e.id===envId);
   env.totalIn = Number(env.totalIn||0) + amount;
 
-  // Répartition automatique aux projets liés (FIFO : plus anciens non-terminés d’abord)
-  autoAllocateToProjects(envId, amount);
-
-  $("savVersement").value="";
-  persist(); renderBudgetAll(); renderEpargneAll();
-}
-
-function autoAllocateToProjects(envId, amount){
-  // prend les projets non terminés de l’enveloppe
-  const list = PROJ.filter(p=>p.envId===envId && !p.done);
-  // ordre FIFO (création) = ordre d’apparition
+  // auto-allocate aux projets non terminés, plus anciens d’abord
   let remain = amount;
+  const list = PROJ.filter(p=>p.envId===envId && !p.done);
   for(const p of list){
     if(remain<=0) break;
     const need = Math.max(0, Number(p.target||0) - Number(p.saved||0));
-    if(need<=0){ p.done = true; continue; }
+    if(need<=0){ p.done=true; continue; }
     const take = Math.min(need, remain);
     p.saved = Number(p.saved||0) + take;
-    PROJ_TX.push({id:crypto.randomUUID(),date:today(),projectId:p.id,amount:take,envId});
+    PROJ_TX.push({id:crypto.randomUUID(),date:new Date().toISOString().slice(0,10),projectId:p.id,amount:take,envId});
     if(p.saved >= p.target){ p.done = true; }
     remain -= take;
   }
-  // s’il reste du surplus, il reste dans l’enveloppe (env.totalIn déjà compté)
+  $("savVersement").value="";
+  persist(); renderAll();
 }
 
 /* ========= UI: Projets ========= */
 function addProjet(){
-  if(!SAV_ENV.length) return alert("Crée d'abord une enveloppe d’épargne.");
+  if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("projEnv").value;
   const name = ($("projNom").value||"").trim();
   const target = Number(($("projPrix").value||0));
-  if(!name || !target) return alert("Nom et objectif requis.");
+  if(!name || !target){ alert("Nom et objectif requis."); return; }
   PROJ.push({id:crypto.randomUUID(),name,envId,target,saved:0,done:false});
   $("projNom").value=""; $("projPrix").value="";
-  persist(); renderEpargneAll();
+  persist(); renderAll();
 }
-
 function delProjet(id){
   PROJ = PROJ.filter(p=>p.id!==id);
   PROJ_TX = PROJ_TX.filter(t=>t.projectId!==id);
-  persist(); renderEpargneAll();
+  persist(); renderAll();
+}
+
+/* ========= UI: Dépenses budgétées (facultatif) ========= */
+function addDepenseEnv(){
+  const name = ($("depNom").value||"").trim();
+  const bud  = Number(($("depMontant").value||0));
+  if(!name || !bud){ alert("Nom et budget requis."); return; }
+  DEP_ENV.push({id:crypto.randomUUID(),name,budget:bud});
+  $("depNom").value=""; $("depMontant").value="";
+  persist(); renderAll();
+}
+function delDepenseEnv(id){
+  DEP_ENV = DEP_ENV.filter(e=>e.id!==id);
+  persist(); renderAll();
 }
 
 /* ========= Rendering ========= */
-function renderBudgetAll(){
-  // top tags
+function renderBudget(){
   $("nowMonth").textContent = new Date().toLocaleString("fr-DZ",{month:"long",year:"numeric"});
-  $("txDate").value = today();
+  $("revenusInfo").innerHTML = `💰 Salaire : ${fmt(SALAIRE)}<br>➕ Revenus supplémentaires : ${fmt(REVENUS_SUPP)}<br>📊 Total revenus : ${fmt(totalRevenus())}`;
 
-  // revenus
-  $("salaireAffiche").innerHTML =
-    `💰 Salaire : ${fmt(SALAIRE)}<br>➕ Revenus supplémentaires : ${fmt(REVENUS_SUPP)}<br>📊 Total disponible : ${fmt(totalRevenus())}`;
-  $("dashRevenus").textContent = fmt(totalRevenus());
-
-  // dépenses env
-  const sb = spentByCatMonth(ymNow());
-  $("depBody").innerHTML = DEP_ENV.map(e=>`
-    <tr>
-      <td>${e.name}</td>
-      <td class="right">${fmt(e.budget||0)}</td>
-      <td class="right"><button class="danger" onclick="delDepenseEnv('${e.id}')">Suppr.</button></td>
-    </tr>
-  `).join("");
-  $("depTotal").textContent = just(sumDepBudgets());
-  $("dashDepBudg").textContent = fmt(sumDepBudgets());
-
-  // select pour dépenses
-  $("txCat").innerHTML = DEP_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
-
-  // dépenses historiques
-  $("txBody").innerHTML = DEP_TX.slice().reverse().map(t=>{
-    const c = DEP_ENV.find(x=>x.id===t.catId);
-    return `<tr><td>${t.date||"—"}</td><td>${c?c.name:"—"}</td><td>${t.note||""}</td><td class="right">${fmt(t.amount)}</td></tr>`;
-  }).join("");
-
-  // dashboard calculs
-  const spent = totalDepenseMonth(ymNow());
-  const theo  = theoSave(ymNow());
-  const savTot= totalSavAlloue();
-  const left  = leftToAllocate(ymNow());
-  $("dashDepense").textContent = fmt(spent);
-  $("dashTheoSave").textContent = fmt(theo);
-  $("dashSavAlloue").textContent = fmt(savTot);
-  $("dashLeft").textContent = fmt(left);
-  const ratio = totalRevenus() ? Math.min(100, Math.round((spent/totalRevenus())*100)) : 0;
-  $("barSpent").style.width = ratio+"%";
-
-  // Épargne enveloppes
+  // Épargne – enveloppes
   $("savBody").innerHTML = SAV_ENV.map(e=>`
     <tr>
       <td>${e.name}</td>
@@ -387,14 +279,28 @@ function renderBudgetAll(){
   $("savTotal").textContent = just(totalSavAlloue());
   $("savSelect").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
 
-  // “projection” rapide = (theoSave × 12) indicatif
-  // (tu peux ajouter un tableau annuel si tu veux ici)
+  // Dépenses budgétées
+  $("depBody").innerHTML = DEP_ENV.map(e=>`
+    <tr>
+      <td>${e.name}</td>
+      <td class="right">${fmt(e.budget||0)}</td>
+      <td class="right"><button class="danger" onclick="delDepenseEnv('${e.id}')">Suppr.</button></td>
+    </tr>
+  `).join("");
+  $("depTotal").textContent = just(sumDepBudgets());
+
+  // Dashboard simple
+  $("dashRevenus").textContent = fmt(totalRevenus());
+  $("dashDepBudg").textContent = fmt(sumDepBudgets());
+  $("dashSavAlloue").textContent = fmt(totalSavAlloue());
+  const left = Math.max(0, totalRevenus() - sumDepBudgets() - totalSavAlloue());
+  $("dashLeft").textContent = fmt(left);
+  const ratio = totalRevenus()? Math.min(100, Math.round((totalSavAlloue()/totalRevenus())*100)) : 0;
+  $("barSpent").style.width = ratio + "%";
 }
 
-function renderEpargneAll(){
-  // select d’enveloppes pour projet
+function renderEpargne(){
   $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
-  // liste projets
   $("projBody").innerHTML = PROJ.map(p=>{
     const env = SAV_ENV.find(e=>e.id===p.envId);
     const pct = p.target ? Math.min(100, Math.round((Number(p.saved||0)/Number(p.target))*100)) : 0;
@@ -411,16 +317,15 @@ function renderEpargneAll(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <div class="muted">${pct}%</div>
         </td>
-        <td class="right">
-          <button class="danger" onclick="delProjet('${p.id}')">Suppr.</button>
-        </td>
+        <td class="right"><button class="danger" onclick="delProjet('${p.id}')">Suppr.</button></td>
       </tr>
     `;
   }).join("");
 }
 
-/* ========= Boot ========= */
-function renderAll(){ renderBudgetAll(); renderEpargneAll(); }
+function renderAll(){ renderBudget(); renderEpargne(); }
+
+// Boot
 renderAll();
 </script>
 </body>
