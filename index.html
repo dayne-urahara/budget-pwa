@@ -1,305 +1,427 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Budget – PWA (Revenus, Projection, Boussole & Épargnes)</title>
-
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest?v=5" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-
-  <style>
-    :root { --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --accent:#2563eb; --good:#16a34a; --warn:#f59e0b; --bad:#ef4444; --bar:#22c55e; --bar2:#3b82f6; }
-    *{ box-sizing:border-box }
-    body{ margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg) }
-    .wrap{ max-width:1200px; margin:0 auto; padding:16px }
-    .topnav{ position:sticky; top:0; background:rgba(246,247,251,.8); backdrop-filter:saturate(180%) blur(8px); border-bottom:1px solid var(--ring); display:flex; gap:8px; padding:10px 16px; z-index:9 }
-    .tab{ padding:10px 14px; border-radius:999px; border:1px solid var(--ring); background:#fff; cursor:pointer; }
-    .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent) }
-    .grid{ display:grid; grid-template-columns:1fr; gap:12px }
-    @media(min-width:1100px){ .grid{ grid-template-columns:1.25fr .75fr } }
-    .card{ background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04) }
-    h1{ margin:8px 0 12px } h2{ margin:0 0 10px; font-size:18px }
-    input,select,button{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--ring); font-size:16px; background:#fff }
-    button{ border:none; background:var(--accent); color:#fff; cursor:pointer }
-    .row{ display:flex; gap:8px; flex-wrap:wrap } .row>*{ flex:1 }
-    .muted{ color:var(--muted); font-size:14px }
-    .pill{ display:inline-block; padding:4px 8px; border-radius:999px; background:#eef2ff; color:#4338ca; font-size:12px }
-    .table{ width:100%; border-collapse: collapse } .table th,.table td{ padding:8px; border-bottom:1px dashed #e5e7eb; text-align:left; vertical-align:top }
-    .right{ text-align:right }
-    .bar{ height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden }
-    .bar>i{ display:block; height:100%; background:var(--bar); width:0% }
-    .bar.blue>i{ background:var(--bar2) }
-    .good{ color:var(--good) } .warn{ color:var(--warn) } .bad{ color:var(--bad) }
-    .hint{ padding:10px; border-radius:12px; background:#f8fafc; border:1px dashed #e2e8f0; font-size:14px }
-    .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
-    .danger{ background:var(--bad) }
-    .ghost{ background:#111827; color:#fff }
-    .hide{ display:none !important }
-    .goal-ok{ color:#fff; background:var(--good); padding:2px 8px; border-radius:999px; font-size:12px }
-    .goal-warn{ color:#fff; background:var(--warn); padding:2px 8px; border-radius:999px; font-size:12px }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Budget & Épargne (auto-allocation par enveloppe)</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--ring:#e5e7eb;--accent:#2563eb;--good:#16a34a;--bad:#ef4444}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{background:#111827;color:#fff;padding:16px}
+  header h1{margin:0;font-size:20px}
+  nav{display:flex;background:#1f2937}
+  nav button{flex:1;padding:12px 10px;border:none;background:#1f2937;color:#fff;cursor:pointer;font-size:16px}
+  nav button.active{background:#0b1220;font-weight:600}
+  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .page{display:none}
+  .page.active{display:block}
+  .grid{display:grid;grid-template-columns:1fr;gap:12px}
+  @media(min-width:1000px){.grid{grid-template-columns:1.2fr .8fr}}
+  .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  h2{margin:0 0 10px 0;font-size:18px}
+  input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ring);font-size:16px;background:#fff}
+  button.btn{border:none;background:var(--accent);color:#fff;cursor:pointer}
+  .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
+  .muted{color:var(--muted);font-size:14px}
+  .table{width:100%;border-collapse:collapse;margin-top:10px}
+  .table th,.table td{border-bottom:1px dashed #e5e7eb;padding:8px;text-align:left;vertical-align:top}
+  .right{text-align:right}
+  .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px}
+  .success{color:var(--good);font-weight:600}
+  .danger{background:var(--bad);color:#fff;border:none;padding:6px 8px;border-radius:8px;cursor:pointer}
+  .bar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:#22c55e;width:0%}
+  .tag{padding:2px 8px;border-radius:999px;font-size:12px;background:#f1f5f9}
+</style>
 </head>
 <body>
-  <div class="topnav">
-    <button class="tab active" id="tabBudget">Budget</button>
-    <button class="tab" id="tabSavings">Épargnes</button>
-  </div>
+<header><h1>Gestionnaire de Budget & Épargne</h1></header>
+<nav>
+  <button id="btnBudget" class="active" onclick="showPage('budget')">💰 Budget</button>
+  <button id="btnEpargne" onclick="showPage('epargne')">📊 Épargne & Projets</button>
+</nav>
 
-  <div class="wrap">
-    <h1>Budget (PWA) — Revenus, Projection & Boussole</h1>
-    <p class="muted">Ajoute cette app à l’écran d’accueil (Safari → Partager → “Ajouter à l’écran d’accueil”). Les données sont stockées en local.</p>
-
-    <!-- PAGE BUDGET -->
-    <section id="pageBudget">
-      <div class="grid">
-        <!-- Colonne gauche -->
-        <div class="grid-col">
-
-          <div class="card">
-            <h2>1) Salaire de base</h2>
-            <div class="row">
-              <input id="salary" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)" />
-              <button id="saveSalary">Enregistrer</button>
-            </div>
-            <p class="muted">Salaire actuel : <strong id="currentSalary">—</strong></p>
+<div class="wrap">
+  <!-- PAGE BUDGET -->
+  <div id="budget" class="page active">
+    <div class="grid">
+      <div class="grid-col">
+        <div class="card">
+          <h2>1) Salaire & Autres revenus</h2>
+          <div class="row">
+            <input id="salaireInput" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)"/>
+            <button class="btn" onclick="saveSalaire()">Enregistrer</button>
           </div>
-
-          <div class="card">
-            <h2>2) Autres rentrées d’argent (mois en cours)</h2>
-            <div class="row">
-              <input id="incAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
-              <input id="incDate" type="date" />
-            </div>
-            <div class="row">
-              <input id="incNote" placeholder="Note (ex: freelance, prime, remboursement…)" />
-              <button id="addIncome">Ajouter rentrée</button>
-            </div>
-            <table class="table">
-              <thead><tr><th>Date</th><th>Note</th><th class="right">Montant</th><th></th></tr></thead>
-              <tbody id="incBody"></tbody>
-            </table>
-            <p><span class="pill">Total autres revenus (mois) : <span id="incTotal">0</span> DZD</span></p>
+          <div class="row">
+            <input id="revenuInput" type="number" inputmode="decimal" placeholder="Autre revenu ponctuel (DZD)"/>
+            <button class="btn" onclick="addRevenu()">Ajouter revenu</button>
           </div>
-
-          <div class="card">
-            <h2>3) Enveloppes de dépenses</h2>
-            <div class="row">
-              <input id="catName" placeholder="Nom (ex: Courses, Véhicule, Scolaire)" />
-              <input id="catBudget" type="number" inputmode="decimal" placeholder="Budget (DZD)" />
-              <button id="addCat">Ajouter</button>
-            </div>
-            <table class="table">
-              <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
-              <tbody id="catsBody"></tbody>
-            </table>
-            <p><span class="pill">Total catégories : <span id="catsTotal">0</span> DZD</span></p>
-          </div>
-
-          <div class="card">
-            <h2>4) Dépenses</h2>
-            <div class="row">
-              <select id="txCat"></select>
-              <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
-            </div>
-            <div class="row">
-              <input id="txNote" placeholder="Note (facultatif)" />
-              <input id="txDate" type="date" />
-            </div>
-            <div class="row">
-              <button id="addTx">Ajouter dépense</button>
-              <button id="clearTx" class="danger">Vider l'historique</button>
-            </div>
-            <table class="table">
-              <thead><tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr></thead>
-              <tbody id="txBody"></tbody>
-            </table>
-          </div>
-
+          <p id="salaireAffiche" class="muted"></p>
         </div>
 
-        <!-- Colonne droite -->
-        <div class="grid-col">
-          <div class="card">
-            <h2>Dashboard & Boussole</h2>
-            <p class="muted" id="nowMonthTag"></p>
-            <p>Revenu du mois (salaire + autres) : <strong id="dashIncome">—</strong></p>
-            <p>Salaire de base : <strong id="dashSalary">—</strong></p>
-            <p>Autres revenus (mois) : <strong id="dashIncOther">—</strong></p>
-            <p>Total budgets (dépenses) : <strong id="dashCats">—</strong></p>
-            <p>Total dépensé (mois) : <strong id="dashSpent">—</strong></p>
-            <p>Épargne théorique (Revenu − Dépenses) : <strong id="dashSave">—</strong></p>
-            <p>Épargne allouée (soldes épargnes) : <strong id="dashSavings">—</strong></p>
-            <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
-            <div class="bar"><i id="barSpent"></i></div>
-            <p class="muted">% dépensé vs revenu du mois.</p>
-            <div class="hint" id="compassBox">Conseils dynamiques…</div>
+        <div class="card">
+          <h2>2) Enveloppes de DÉPENSES (budgets)</h2>
+          <div class="row">
+            <input id="depNom" placeholder="Nom (Courses, Véhicule, Scolaire…)"/>
+            <input id="depMontant" type="number" inputmode="decimal" placeholder="Budget mensuel (DZD)"/>
+            <button class="btn" onclick="addDepenseEnv()">Ajouter</button>
           </div>
+          <table class="table">
+            <thead><tr><th>Enveloppe</th><th class="right">Budget</th><th></th></tr></thead>
+            <tbody id="depBody"></tbody>
+          </table>
+          <p><span class="pill">Total dépenses budgétées : <span id="depTotal">0</span> DZD</span></p>
+        </div>
 
-          <div class="card">
-            <h2>Projection annuelle</h2>
-            <div class="row">
-              <select id="yearSelect"></select>
-              <button id="refreshYear">Actualiser</button>
-            </div>
-            <div id="yearTableWrap"></div>
+        <div class="card">
+          <h2>3) Dépenses effectives (mois en cours)</h2>
+          <div class="row">
+            <select id="txCat"></select>
+            <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
           </div>
-
-          <div class="card">
-            <h2>Export / Import</h2>
-            <div class="actions">
-              <button id="exportBtn" class="ghost">Exporter JSON</button>
-              <input id="importFile" type="file" accept="application/json" />
-            </div>
+          <div class="row">
+            <input id="txNote" placeholder="Note (facultatif)"/>
+            <input id="txDate" type="date"/>
           </div>
+          <div class="row">
+            <button class="btn" onclick="addDepenseTx()">Ajouter dépense</button>
+            <button class="danger" onclick="clearDepenseTx()">Vider l'historique</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr></thead>
+            <tbody id="txBody"></tbody>
+          </table>
         </div>
       </div>
-    </section>
 
-    <!-- PAGE EPARGNES -->
-    <section id="pageSavings" class="hide">
-      <div class="card">
-        <h2>Épargnes — objectifs & contributions</h2>
-        <div class="row">
-          <input id="svName" placeholder="Nom (ex: Meuble salle de bain)" />
-          <input id="svTarget" type="number" inputmode="decimal" placeholder="Objectif (DZD)" />
-          <button id="svCreate">Créer / Mettre à jour objectif</button>
-        </div>
-        <div class="row">
-          <select id="svSelect"></select>
-          <input id="svContrib" type="number" inputmode="decimal" placeholder="Contribution (DZD)" />
-          <button id="svAdd">Ajouter contribution</button>
+      <div class="grid-col">
+        <div class="card">
+          <h2>Dashboard</h2>
+          <p class="muted"><span class="tag" id="nowMonth"></span></p>
+          <p>Salaire + revenus : <strong id="dashRevenus">—</strong></p>
+          <p>Total dépenses budgétées : <strong id="dashDepBudg">—</strong></p>
+          <p>Total dépensé (mois) : <strong id="dashDepense">—</strong></p>
+          <p>Épargne théorique (revenus − dépenses) : <strong id="dashTheoSave">—</strong></p>
+          <p>Épargne allouée (toutes enveloppes épargne) : <strong id="dashSavAlloue">—</strong></p>
+          <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
+          <div class="bar"><i id="barSpent"></i></div>
+          <p class="muted">% dépensé vs revenus (mois courant).</p>
         </div>
 
-        <table class="table">
-          <thead><tr><th>Épargne</th><th class="right">Solde</th><th class="right">Objectif</th><th>Progression</th><th></th></tr></thead>
-          <tbody id="svBody"></tbody>
-        </table>
-        <p><span class="pill">Total épargne allouée : <span id="svTotal">0</span> DZD</span></p>
-        <p class="muted">Quand le solde atteint l’objectif, le badge devient <strong class="good">VERT</strong>.</p>
+        <div class="card">
+          <h2>4) Enveloppes d’ÉPARGNE</h2>
+          <div class="row">
+            <input id="savNom" placeholder="Nom (Aménagement, Voyage, Sécurité, Or…)"/>
+            <button class="btn" onclick="addSavEnv()">Créer enveloppe d’épargne</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Enveloppe</th><th class="right">Total versé</th><th></th></tr></thead>
+            <tbody id="savBody"></tbody>
+          </table>
+          <p><span class="pill">Total épargne versée : <span id="savTotal">0</span> DZD</span></p>
+
+          <h3 style="margin-top:16px">Versement dans une enveloppe d’épargne</h3>
+          <div class="row">
+            <select id="savSelect"></select>
+            <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant à verser (DZD)"/>
+            <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
+          </div>
+          <p class="muted">Le versement est automatiquement réparti entre les projets <em>liés à cette enveloppe</em> jusqu’à atteindre leurs objectifs.</p>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 
-  <!-- SW Recovery + App -->
-  <script>
-  (async function recoverSW(){
-    if (!('serviceWorker' in navigator)) return;
-    const flag = sessionStorage.getItem('sw_ok_v5');
-    if (!flag) {
-      try {
-        const regs = await navigator.serviceWorker.getRegistrations();
-        for (const r of regs) await r.unregister();
-        if (window.caches) { for (const k of await caches.keys()) await caches.delete(k); }
-      } catch(e) {}
-      sessionStorage.setItem('sw_ok_v5','1');
-      location.replace(location.href.split('#')[0]);
-      return;
-    } else {
-      navigator.serviceWorker.register('./sw.js?v=5').catch(()=>{});
-    }
-  })();
-  </script>
+  <!-- PAGE ÉPARGNE & PROJETS -->
+  <div id="epargne" class="page">
+    <div class="card">
+      <h2>Projets d’épargne (liés à une enveloppe)</h2>
+      <div class="row">
+        <select id="projEnv"></select>
+        <input id="projNom" placeholder="Nom du projet (ex: Meuble salle de bain, Voyage Paris…)"/>
+      </div>
+      <div class="row">
+        <input id="projPrix" type="number" inputmode="decimal" placeholder="Prix / objectif (DZD)"/>
+        <button class="btn" onclick="addProjet()">Créer projet</button>
+      </div>
+      <p class="muted">⚙️ Le projet sera alimenté automatiquement par les versements de son enveloppe (FIFO : les plus anciens projets sont complétés d’abord).</p>
 
-  <script>
-  // ======== STATE & HELPERS (LocalStorage) ========
-  const $ = (id)=>document.getElementById(id);
-  const fmt = (n)=> new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0)) + " DZD";
-  const just= (n)=> new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
-  const today=()=> new Date().toISOString().slice(0,10);
-  const ym   = (d)=> (d||new Date()).toISOString().slice(0,7);
-  const ymNow= ()=> ym();
+      <table class="table">
+        <thead><tr><th>Projet</th><th>Enveloppe</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th></th></tr></thead>
+        <tbody id="projBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-  let baseSalary = Number(localStorage.getItem("salary")||0);
-  let cats = JSON.parse(localStorage.getItem("cats")||"[]"); // {id,name,budget}
-  let tx   = JSON.parse(localStorage.getItem("tx")||"[]");   // {id,date,catId,amount,note}
-  let incomes = JSON.parse(localStorage.getItem("incomes")||"[]"); // {id,date,amount,note}
-  let savings = JSON.parse(localStorage.getItem("savings")||"[]"); // {id,name,balance,target}
+<script>
+/* ========= State & Storage ========= */
+const $ = id => document.getElementById(id);
+const fmt = n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0))+" DZD";
+const just = n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
+const today = () => new Date().toISOString().slice(0,10);
+const ymNow = () => new Date().toISOString().slice(0,7);
 
-  function saveAll(){
-    localStorage.setItem("salary", baseSalary);
-    localStorage.setItem("cats", JSON.stringify(cats));
-    localStorage.setItem("tx", JSON.stringify(tx));
-    localStorage.setItem("incomes", JSON.stringify(incomes));
-    localStorage.setItem("savings", JSON.stringify(savings));
-  }
+let SALAIRE = Number(localStorage.getItem("SALAIRE")||0);
+let REVENUS_SUPP = Number(localStorage.getItem("REVENUS_SUPP")||0);
 
-  // ======== CALCULS ========
-  function incomeOtherTotal(ymStr){
-    return incomes.filter(i => (i.date||"").slice(0,7)===ymStr)
-                  .reduce((s,i)=> s + Number(i.amount||0), 0);
-  }
-  function incomeMonth(ymStr){
-    return (Number(baseSalary)||0) + incomeOtherTotal(ymStr);
-  }
-  function spentMonth(ymStr){
-    return tx.filter(t => (t.date||"").slice(0,7)===ymStr)
-             .reduce((s,t)=> s + Number(t.amount||0), 0);
-  }
-  function budgetsTotal(){
-    return cats.reduce((s,c)=> s + Number(c.budget||0), 0);
-  }
-  function savingsTotal(){
-    return savings.reduce((s,g)=> s + Number(g.balance||0), 0);
-  }
-  function theoreticalSave(ymStr){
-    return Math.max(0, incomeMonth(ymStr) - spentMonth(ymStr));
-  }
-  function leftToAllocate(ymStr){
-    return Math.max(0, theoreticalSave(ymStr) - savingsTotal());
-  }
+// Enveloppes de dépenses (budgets mensuels “cibles”)
+let DEP_ENV = JSON.parse(localStorage.getItem("DEP_ENV")||"[]");      // {id,name,budget}
+let DEP_TX  = JSON.parse(localStorage.getItem("DEP_TX")||"[]");       // {id,date,catId,amount,note}
 
-  // ======== RENDU — BUDGET PAGE ========
-  const nowTag = $("nowMonthTag");
-  const salaryInput=$("salary"), currentSalary=$("currentSalary");
-  const incAmount=$("incAmount"), incDate=$("incDate"), incNote=$("incNote"), incBody=$("incBody"), incTotal=$("incTotal");
-  const catName=$("catName"), catBudget=$("catBudget"), catsBody=$("catsBody"), catsTotal=$("catsTotal"), txCat=$("txCat");
-  const txAmount=$("txAmount"), txNote=$("txNote"), txDate=$("txDate"), txBody=$("txBody");
-  const dashIncome=$("dashIncome"), dashSalary=$("dashSalary"), dashIncOther=$("dashIncOther"), dashCats=$("dashCats"), dashSpent=$("dashSpent"), dashSave=$("dashSave"), dashSavings=$("dashSavings"), dashLeft=$("dashLeft"), barSpent=$("barSpent");
-  const exportBtn=$("exportBtn"), importFile=$("importFile");
+// Enveloppes d’épargne
+let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");      // {id,name,totalIn}
+let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");       // {id,date,envId,amount}
 
-  txDate.value = today();
-  incDate.value = today();
-  nowTag.textContent = new Date().toLocaleString("fr-DZ", { month:"long", year:"numeric" });
+// Projets liés à une enveloppe
+let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");         // {id,name,envId,target,saved,done}
+let PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");      // {id,date,projectId,amount,envId}
 
-  function renderSalary(){
-    currentSalary.textContent = baseSalary ? fmt(baseSalary) : "—";
-    salaryInput.value = baseSalary || "";
+function persist(){
+  localStorage.setItem("SALAIRE",SALAIRE);
+  localStorage.setItem("REVENUS_SUPP",REVENUS_SUPP);
+  localStorage.setItem("DEP_ENV",JSON.stringify(DEP_ENV));
+  localStorage.setItem("DEP_TX",JSON.stringify(DEP_TX));
+  localStorage.setItem("SAV_ENV",JSON.stringify(SAV_ENV));
+  localStorage.setItem("SAV_TX",JSON.stringify(SAV_TX));
+  localStorage.setItem("PROJ",JSON.stringify(PROJ));
+  localStorage.setItem("PROJ_TX",JSON.stringify(PROJ_TX));
+}
+
+/* ========= Navigation ========= */
+function showPage(id){
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  $(id).classList.add("active");
+  (id==="budget"?$("btnBudget"):$("btnEpargne")).classList.add("active");
+}
+
+/* ========= Helpers calcul ========= */
+function totalDepenseMonth(ym){
+  return DEP_TX.filter(t=> (t.date||"").slice(0,7)===ym).reduce((s,t)=>s+Number(t.amount||0),0);
+}
+function spentByCatMonth(ym){
+  const m={};
+  for(const t of DEP_TX){
+    if((t.date||"").slice(0,7)!==ym) continue;
+    m[t.catId]=(m[t.catId]||0)+Number(t.amount||0);
   }
+  return m;
+}
+function sumDepBudgets(){ return DEP_ENV.reduce((s,c)=>s+Number(c.budget||0),0); }
+function totalRevenus(){ return (Number(SALAIRE)||0)+(Number(REVENUS_SUPP)||0); }
+function totalSavAlloue(){ return SAV_ENV.reduce((s,e)=> s + Number(e.totalIn||0), 0); }
+function theoSave(ym){ return Math.max(0, totalRevenus() - totalDepenseMonth(ym)); }
+function leftToAllocate(ym){ return Math.max(0, theoSave(ym) - totalSavAlloue()); }
 
-  function renderIncomes(){
-    const ymC = ymNow();
-    const list = incomes.filter(i => (i.date||"").slice(0,7)===ymC).slice().reverse();
-    incBody.innerHTML = list.map(i => `
+/* ========= UI: Budget ========= */
+function saveSalaire(){
+  const v = Number(($("salaireInput").value||0));
+  if(!v) return alert("Entre un salaire valide.");
+  SALAIRE=v; persist(); renderBudgetAll();
+}
+function addRevenu(){
+  const v = Number(($("revenuInput").value||0));
+  if(!v) return alert("Montant invalide.");
+  REVENUS_SUPP += v; $("revenuInput").value="";
+  persist(); renderBudgetAll();
+}
+
+function addDepenseEnv(){
+  const name = ($("depNom").value||"").trim();
+  const bud  = Number(($("depMontant").value||0));
+  if(!name || !bud) return alert("Nom et budget requis.");
+  DEP_ENV.push({id:crypto.randomUUID(),name,budget:bud});
+  $("depNom").value=""; $("depMontant").value="";
+  persist(); renderBudgetAll();
+}
+
+function delDepenseEnv(id){
+  // supprime dépenses liées
+  DEP_TX = DEP_TX.filter(t=>t.catId!==id);
+  DEP_ENV = DEP_ENV.filter(e=>e.id!==id);
+  persist(); renderBudgetAll();
+}
+
+function addDepenseTx(){
+  if(!DEP_ENV.length) return alert("Crée d'abord une enveloppe de dépenses.");
+  const catId = $("txCat").value;
+  const amount = Number(($("txAmount").value||0));
+  if(!amount || amount<=0) return alert("Montant invalide.");
+  DEP_TX.push({id:crypto.randomUUID(),date:$("txDate").value||today(),catId,amount,note:($("txNote").value||"").trim()});
+  $("txAmount").value=""; $("txNote").value="";
+  persist(); renderBudgetAll();
+}
+function clearDepenseTx(){
+  if(!confirm("Supprimer tout l'historique des dépenses ?")) return;
+  DEP_TX=[]; persist(); renderBudgetAll();
+}
+
+/* ========= UI: Épargne ========= */
+function addSavEnv(){
+  const name = ($("savNom").value||"").trim();
+  if(!name) return alert("Nom requis.");
+  SAV_ENV.push({id:crypto.randomUUID(),name,totalIn:0});
+  $("savNom").value="";
+  persist(); renderBudgetAll(); renderEpargneAll();
+}
+
+function delSavEnv(id){
+  // supprime versements (on garde l’historique projet mais ce n’est pas bloquant)
+  SAV_TX = SAV_TX.filter(t=>t.envId!==id);
+  // supprime projets liés + tx projets liés
+  const projIds = PROJ.filter(p=>p.envId===id).map(p=>p.id);
+  PROJ_TX = PROJ_TX.filter(x=> !projIds.includes(x.projectId));
+  PROJ = PROJ.filter(p=>p.envId!==id);
+  // supprime enveloppe
+  SAV_ENV = SAV_ENV.filter(e=>e.id!==id);
+  persist(); renderBudgetAll(); renderEpargneAll();
+}
+
+function verserEpargne(){
+  if(!SAV_ENV.length) return alert("Crée d'abord une enveloppe d’épargne.");
+  const envId = $("savSelect").value;
+  const amount = Number(($("savVersement").value||0));
+  if(!amount || amount<=0) return alert("Montant invalide.");
+  // Enregistre le versement dans enveloppe
+  SAV_TX.push({id:crypto.randomUUID(),date:today(),envId,amount});
+  const env = SAV_ENV.find(e=>e.id===envId);
+  env.totalIn = Number(env.totalIn||0) + amount;
+
+  // Répartition automatique aux projets liés (FIFO : plus anciens non-terminés d’abord)
+  autoAllocateToProjects(envId, amount);
+
+  $("savVersement").value="";
+  persist(); renderBudgetAll(); renderEpargneAll();
+}
+
+function autoAllocateToProjects(envId, amount){
+  // prend les projets non terminés de l’enveloppe
+  const list = PROJ.filter(p=>p.envId===envId && !p.done);
+  // ordre FIFO (création) = ordre d’apparition
+  let remain = amount;
+  for(const p of list){
+    if(remain<=0) break;
+    const need = Math.max(0, Number(p.target||0) - Number(p.saved||0));
+    if(need<=0){ p.done = true; continue; }
+    const take = Math.min(need, remain);
+    p.saved = Number(p.saved||0) + take;
+    PROJ_TX.push({id:crypto.randomUUID(),date:today(),projectId:p.id,amount:take,envId});
+    if(p.saved >= p.target){ p.done = true; }
+    remain -= take;
+  }
+  // s’il reste du surplus, il reste dans l’enveloppe (env.totalIn déjà compté)
+}
+
+/* ========= UI: Projets ========= */
+function addProjet(){
+  if(!SAV_ENV.length) return alert("Crée d'abord une enveloppe d’épargne.");
+  const envId = $("projEnv").value;
+  const name = ($("projNom").value||"").trim();
+  const target = Number(($("projPrix").value||0));
+  if(!name || !target) return alert("Nom et objectif requis.");
+  PROJ.push({id:crypto.randomUUID(),name,envId,target,saved:0,done:false});
+  $("projNom").value=""; $("projPrix").value="";
+  persist(); renderEpargneAll();
+}
+
+function delProjet(id){
+  PROJ = PROJ.filter(p=>p.id!==id);
+  PROJ_TX = PROJ_TX.filter(t=>t.projectId!==id);
+  persist(); renderEpargneAll();
+}
+
+/* ========= Rendering ========= */
+function renderBudgetAll(){
+  // top tags
+  $("nowMonth").textContent = new Date().toLocaleString("fr-DZ",{month:"long",year:"numeric"});
+  $("txDate").value = today();
+
+  // revenus
+  $("salaireAffiche").innerHTML =
+    `💰 Salaire : ${fmt(SALAIRE)}<br>➕ Revenus supplémentaires : ${fmt(REVENUS_SUPP)}<br>📊 Total disponible : ${fmt(totalRevenus())}`;
+  $("dashRevenus").textContent = fmt(totalRevenus());
+
+  // dépenses env
+  const sb = spentByCatMonth(ymNow());
+  $("depBody").innerHTML = DEP_ENV.map(e=>`
+    <tr>
+      <td>${e.name}</td>
+      <td class="right">${fmt(e.budget||0)}</td>
+      <td class="right"><button class="danger" onclick="delDepenseEnv('${e.id}')">Suppr.</button></td>
+    </tr>
+  `).join("");
+  $("depTotal").textContent = just(sumDepBudgets());
+  $("dashDepBudg").textContent = fmt(sumDepBudgets());
+
+  // select pour dépenses
+  $("txCat").innerHTML = DEP_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+
+  // dépenses historiques
+  $("txBody").innerHTML = DEP_TX.slice().reverse().map(t=>{
+    const c = DEP_ENV.find(x=>x.id===t.catId);
+    return `<tr><td>${t.date||"—"}</td><td>${c?c.name:"—"}</td><td>${t.note||""}</td><td class="right">${fmt(t.amount)}</td></tr>`;
+  }).join("");
+
+  // dashboard calculs
+  const spent = totalDepenseMonth(ymNow());
+  const theo  = theoSave(ymNow());
+  const savTot= totalSavAlloue();
+  const left  = leftToAllocate(ymNow());
+  $("dashDepense").textContent = fmt(spent);
+  $("dashTheoSave").textContent = fmt(theo);
+  $("dashSavAlloue").textContent = fmt(savTot);
+  $("dashLeft").textContent = fmt(left);
+  const ratio = totalRevenus() ? Math.min(100, Math.round((spent/totalRevenus())*100)) : 0;
+  $("barSpent").style.width = ratio+"%";
+
+  // Épargne enveloppes
+  $("savBody").innerHTML = SAV_ENV.map(e=>`
+    <tr>
+      <td>${e.name}</td>
+      <td class="right">${fmt(e.totalIn||0)}</td>
+      <td class="right"><button class="danger" onclick="delSavEnv('${e.id}')">Suppr.</button></td>
+    </tr>
+  `).join("");
+  $("savTotal").textContent = just(totalSavAlloue());
+  $("savSelect").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+
+  // “projection” rapide = (theoSave × 12) indicatif
+  // (tu peux ajouter un tableau annuel si tu veux ici)
+}
+
+function renderEpargneAll(){
+  // select d’enveloppes pour projet
+  $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+  // liste projets
+  $("projBody").innerHTML = PROJ.map(p=>{
+    const env = SAV_ENV.find(e=>e.id===p.envId);
+    const pct = p.target ? Math.min(100, Math.round((Number(p.saved||0)/Number(p.target))*100)) : 0;
+    const status = (p.done || p.saved>=p.target)
+      ? `<span class="success">Atteint ✅</span>`
+      : `${fmt(p.saved||0)} / ${fmt(p.target)}`;
+    return `
       <tr>
-        <td>${i.date||"—"}</td>
-        <td>${i.note||""}</td>
-        <td class="right">${fmt(i.amount)}</td>
-        <td class="right"><button data-del-inc="${i.id}" class="danger" style="padding:6px 8px;border:none;border-radius:8px">Suppr.</button></td>
+        <td>${p.name}</td>
+        <td>${env?env.name:"—"}</td>
+        <td class="right">${fmt(p.target)}</td>
+        <td class="right">${fmt(p.saved||0)}</td>
+        <td>
+          <div class="bar"><i style="width:${pct}%"></i></div>
+          <div class="muted">${pct}%</div>
+        </td>
+        <td class="right">
+          <button class="danger" onclick="delProjet('${p.id}')">Suppr.</button>
+        </td>
       </tr>
-    `).join("");
-    incTotal.textContent = just(incomeOtherTotal(ymC));
-  }
+    `;
+  }).join("");
+}
 
-  function renderCats(){
-    catsBody.innerHTML = cats.map(c => `
-      <tr>
-        <td>${c.name}</td>
-        <td class="right">${fmt(c.budget||0)}</td>
-        <td class="right"><button data-del-cat="${c.id}" class="danger" style="padding:6px 8px;border:none;border-radius:8px">Suppr.</button></td>
-      </tr>
-    `).join("");
-    catsTotal.textContent = just(budgetsTotal());
-    txCat.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
-  }
-
-  function renderTx(){
-    const ymC = ymNow();
-    txBody.innerHTML = tx.slice().reverse().map(t => {
-      const c = cats.find(x => x.id===t.catId);
-      return `<tr><td>${t.date||"—"}</td><td>${c?c.name:"—"}</td><td>${t.note||""}</td><td class="right">${fmt(t.amount)}</td></tr>`;
-    }).join("");
-    const inc = incomeMonth(ymC), spent = spentMonth(ymC), theo = theoreticalSave(ymC), left = leftToAllocate(ymC);
-    dashIncome.text
+/* ========= Boot ========= */
+function renderAll(){ renderBudgetAll(); renderEpargneAll(); }
+renderAll();
+</script>
+</body>
+</html>
