@@ -1,48 +1,51 @@
-// --- Storage helpers (localStorage pour MVP) ---
-const KEYS = {
-  salary: "salary",
-  cats: "cats",      // [{id,name,budget,spent}]
-  tx: "tx"           // [{date,catId,amount,note}]
-};
+// app.js — utilise IndexedDB via db.js, contrôle budgets, mini-graphes
 
+// Helpers
 const fmt = (n) => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n) || 0)) + " DZD";
-
-const loadJSON = (k, def) => {
-  try { return JSON.parse(localStorage.getItem(k)) ?? def; }
-  catch { return def; }
-};
-const saveJSON = (k, v) => localStorage.setItem(k, JSON.stringify(v));
-
-// --- State ---
-let salary = Number(localStorage.getItem(KEYS.salary) || 0);
-let cats   = loadJSON(KEYS.cats, []);
-let tx     = loadJSON(KEYS.tx, []);
-
-// --- DOM refs ---
 const $ = (id) => document.getElementById(id);
+
+// DOM
 const salaryInput = $("salary"), currentSalary = $("currentSalary"), saveSalary = $("saveSalary");
 const catName = $("catName"), catBudget = $("catBudget"), addCat = $("addCat"), catsBody = $("catsBody"), catsTotal = $("catsTotal");
 const txCat = $("txCat"), txAmount = $("txAmount"), txNote = $("txNote"), txDate = $("txDate"), addTx = $("addTx"), clearTx = $("clearTx"), txBody = $("txBody");
 const dashSalary = $("dashSalary"), dashCats = $("dashCats"), dashSpent = $("dashSpent"), dashSave = $("dashSave"), barSpent = $("barSpent");
-const exportBtn = $("exportBtn"), importFile = $("importFile"), seedDz = $("seedDz");
+const exportBtn = $("exportBtn"), importFile = $("importFile"), seedDz = $("seedDz"), catBars = $("catBars");
 
-// --- Render helpers ---
-function renderSalary(){
+// State en mémoire
+let salary = 0;
+let cats = [];
+let tx = [];
+
+// UI utils
+function warn(msg) { alert(msg); }
+function today() { return new Date().toISOString().slice(0,10); }
+txDate.value = today();
+
+// Render
+function renderSalary() {
   currentSalary.textContent = salary ? fmt(salary) : "—";
   salaryInput.value = salary || "";
   dashSalary.textContent = salary ? fmt(salary) : "—";
 }
 
-function renderCats(){
-  // recalc spent per cat
-  const spentByCat = {};
-  tx.forEach(t => spentByCat[t.catId] = (spentByCat[t.catId]||0) + Number(t.amount));
+function sumBudgets() {
+  return cats.reduce((s,c)=> s + Number(c.budget||0), 0);
+}
+
+function computeSpentByCat() {
+  const m = {};
+  for (const t of tx) m[t.catId] = (m[t.catId] || 0) + Number(t.amount||0);
+  return m;
+}
+
+function renderCats() {
+  const spentBy = computeSpentByCat();
   let totalBud = 0;
 
   catsBody.innerHTML = cats.map(c => {
-    const spent = spentByCat[c.id] || 0;
-    const rest  = Number(c.budget) - spent;
-    totalBud += Number(c.budget || 0);
+    const spent = spentBy[c.id] || 0;
+    const rest  = Math.max(0, Number(c.budget||0) - spent);
+    totalBud += Number(c.budget||0);
     return `<tr>
       <td>${c.name}</td>
       <td class="right">${fmt(c.budget||0)}</td>
@@ -52,14 +55,28 @@ function renderCats(){
     </tr>`;
   }).join("");
 
-  catsTotal.textContent = fmt(totalBud).replace(" DZD",""); // visuel
+  catsTotal.textContent = new Intl.NumberFormat("fr-DZ").format(Math.round(totalBud)); // seulement le nombre
   dashCats.textContent = fmt(totalBud);
 
-  // select
   txCat.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+
+  // mini-graphes barres par catégorie
+  catBars.innerHTML = cats.map(c => {
+    const spent = spentBy[c.id] || 0;
+    const pct = Math.min(100, c.budget ? Math.round((spent / c.budget) * 100) : 0);
+    return `
+      <div style="margin:10px 0">
+        <div style="display:flex;justify-content:space-between;font-size:14px">
+          <span>${c.name}</span>
+          <span>${fmt(spent)} / ${fmt(c.budget||0)}</span>
+        </div>
+        <div class="bar"><i style="width:${pct}%"></i></div>
+      </div>
+    `;
+  }).join("");
 }
 
-function renderTx(){
+function renderTx() {
   txBody.innerHTML = tx.slice().reverse().map(t => {
     const cat = cats.find(c => c.id === t.catId);
     return `<tr>
@@ -79,68 +96,99 @@ function renderTx(){
   barSpent.style.width = ratio + "%";
 }
 
-// --- Init date default ---
-txDate.value = new Date().toISOString().slice(0,10);
+// Data I/O
+async function loadAll() {
+  await migrateIfNeeded();
+  salary = Number(await getMeta("salary")) || 0;
+  cats = await getAll("cats");
+  tx = await getAll("tx");
+  renderSalary(); renderCats(); renderTx();
+}
 
-// --- Events ---
-saveSalary.addEventListener("click", () => {
-  const v = Number(salaryInput.value || 0);
-  if (!v) return alert("Entre un salaire valide.");
-  salary = v;
-  localStorage.setItem(KEYS.salary, String(v));
+async function saveSalaryVal(v) {
+  await setMeta("salary", Number(v));
+  salary = Number(v);
   renderSalary(); renderTx();
+}
+
+async function addCategory(name, budget) {
+  const id = crypto.randomUUID();
+  const newTotal = sumBudgets() + Number(budget||0);
+  if (salary && newTotal > salary) {
+    return warn("La somme des budgets dépasse le salaire. Ajuste tes enveloppes.");
+  }
+  await put("cats", { id, name, budget: Number(budget||0), spent: 0 });
+  cats = await getAll("cats");
+  renderCats(); renderTx();
+}
+
+async function deleteCategory(id) {
+  // supprime dépenses liées
+  const linked = tx.filter(t => t.catId === id);
+  for (const t of linked) { await del("tx", t.id); }
+  await del("cats", id);
+  cats = await getAll("cats");
+  tx = await getAll("tx");
+  renderCats(); renderTx();
+}
+
+async function addExpense(catId, amount, note, date) {
+  if (!cats.length) return warn("Crée d'abord une catégorie.");
+  if (!amount || amount <= 0) return warn("Montant invalide.");
+  await put("tx", { catId, amount: Number(amount), note: (note||"").trim(), date: date || today() });
+  tx = await getAll("tx");
+  renderCats(); renderTx();
+}
+
+// Events
+saveSalary.addEventListener("click", async () => {
+  const v = Number(salaryInput.value || 0);
+  if (!v) return warn("Entre un salaire valide.");
+  // contrôle : si budgets existants > nouveau salaire → avertir
+  if (sumBudgets() > v) {
+    if (!confirm("Tes budgets actuels dépassent ce salaire. Continuer quand même ?")) return;
+  }
+  await saveSalaryVal(v);
 });
 
-addCat.addEventListener("click", () => {
+addCat.addEventListener("click", async () => {
   const name = (catName.value || "").trim();
   const bud  = Number(catBudget.value || 0);
-  if (!name || !bud) return alert("Nom et budget obligatoires.");
-  const id = crypto.randomUUID();
-  cats.push({ id, name, budget: bud, spent: 0 });
-  saveJSON(KEYS.cats, cats);
+  if (!name || !bud) return warn("Nom et budget obligatoires.");
+  await addCategory(name, bud);
   catName.value = ""; catBudget.value = "";
-  renderCats(); renderTx();
 });
 
-// delete cat
-catsBody.addEventListener("click", (e) => {
+catsBody.addEventListener("click", async (e) => {
   const btn = e.target.closest("button[data-del]");
   if (!btn) return;
   const id = btn.getAttribute("data-del");
-  // also remove related tx
-  tx = tx.filter(t => t.catId !== id);
-  cats = cats.filter(c => c.id !== id);
-  saveJSON(KEYS.cats, cats);
-  saveJSON(KEYS.tx, tx);
-  renderCats(); renderTx();
+  if (!confirm("Supprimer cette catégorie (et ses dépenses) ?")) return;
+  await deleteCategory(id);
 });
 
-addTx.addEventListener("click", () => {
-  if (!cats.length) return alert("Crée d'abord une catégorie.");
-  const catId = txCat.value;
-  const amount = Number(txAmount.value || 0);
-  if (!amount || amount <= 0) return alert("Montant invalide.");
-  tx.push({
-    date: txDate.value || new Date().toISOString().slice(0,10),
-    catId,
-    amount,
-    note: (txNote.value||"").trim()
-  });
-  saveJSON(KEYS.tx, tx);
+addTx.addEventListener("click", async () => {
+  await addExpense(txCat.value, Number(txAmount.value||0), txNote.value, txDate.value);
   txAmount.value = ""; txNote.value = "";
-  renderCats(); renderTx();
 });
 
-clearTx.addEventListener("click", () => {
+clearTx.addEventListener("click", async () => {
   if (!confirm("Supprimer tout l'historique des dépenses ?")) return;
+  // Supprime toutes les entrées tx
+  const all = await getAll("tx");
+  for (const t of all) await del("tx", t.id);
   tx = [];
-  saveJSON(KEYS.tx, tx);
   renderCats(); renderTx();
 });
 
 // Export / Import
-exportBtn.addEventListener("click", () => {
-  const blob = new Blob([JSON.stringify({ salary, cats, tx }, null, 2)], { type: "application/json" });
+exportBtn.addEventListener("click", async () => {
+  const data = {
+    salary: salary,
+    cats: await getAll("cats"),
+    tx: await getAll("tx")
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = "budget-data.json"; a.click();
@@ -152,35 +200,37 @@ importFile.addEventListener("change", async (e) => {
   const text = await file.text();
   try {
     const data = JSON.parse(text);
-    salary = Number(data.salary || 0);
-    cats = Array.isArray(data.cats) ? data.cats : [];
-    tx   = Array.isArray(data.tx)   ? data.tx   : [];
-    if (salary) localStorage.setItem(KEYS.salary, String(salary));
-    saveJSON(KEYS.cats, cats); saveJSON(KEYS.tx, tx);
-    renderSalary(); renderCats(); renderTx();
+    // reset stores: (simple: on supprime cat/tx un par un)
+    const existingCats = await getAll("cats"); for (const c of existingCats) await del("cats", c.id);
+    const existingTx = await getAll("tx"); for (const t of existingTx) await del("tx", t.id);
+
+    if (data.salary) await setMeta("salary", Number(data.salary));
+    if (Array.isArray(data.cats)) for (const c of data.cats) await put("cats", c);
+    if (Array.isArray(data.tx))   for (const t of data.tx)   await put("tx", t);
+
+    await loadAll();
     alert("Import OK.");
   } catch {
-    alert("Fichier invalide.");
+    warn("Fichier invalide.");
   }
 });
 
 // Précharger enveloppes DZ (exemple)
-seedDz.addEventListener("click", () => {
+seedDz.addEventListener("click", async () => {
   if (!confirm("Ajouter un exemple d'enveloppes ?")) return;
-  cats = [
-    { id: crypto.randomUUID(), name:"Courses alimentaires", budget:50000, spent:0 },
-    { id: crypto.randomUUID(), name:"Voyages", budget:50000, spent:0 },
-    { id: crypto.randomUUID(), name:"Épargne", budget:40000, spent:0 },
-    { id: crypto.randomUUID(), name:"Frais scolaires", budget:25000, spent:0 },
-    { id: crypto.randomUUID(), name:"Enfants & Épouse", budget:30000, spent:0 },
-    { id: crypto.randomUUID(), name:"Véhicule", budget:20000, spent:0 },
-    { id: crypto.randomUUID(), name:"Maison (aménagement)", budget:60000, spent:0 },
-    { id: crypto.randomUUID(), name:"Maman", budget:5000, spent:0 },
-    { id: crypto.randomUUID(), name:"Perso (Dayne)", budget:30000, spent:0 }
+  const base = [
+    { name:"Courses alimentaires", budget:50000 },
+    { name:"Voyages", budget:50000 },
+    { name:"Épargne", budget:40000 },
+    { name:"Frais scolaires", budget:25000 },
+    { name:"Enfants & Épouse", budget:30000 },
+    { name:"Véhicule", budget:20000 },
+    { name:"Maison (aménagement)", budget:60000 },
+    { name:"Maman", budget:5000 },
+    { name:"Perso (Dayne)", budget:30000 }
   ];
-  saveJSON(KEYS.cats, cats);
-  renderCats(); renderTx();
+  for (const it of base) await addCategory(it.name, it.budget);
 });
 
-// --- First render ---
-renderSalary(); renderCats(); renderTx();
+// GO
+loadAll();
