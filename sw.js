@@ -28,3 +28,5 @@ self.addEventListener("fetch", (event) => {
     )
   );
 });
+// Dans ASSETS ajoute ces fichiers :
+"./", "./index.html", "./manifest.webmanifest", "./app.js"
