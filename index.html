@@ -1,129 +1,358 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Budget Mensuel</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Budget – PWA (Reset SW + App)</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.webmanifest?v=4" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
-    h1, h2 { color: #333; }
-    .card { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    label { display: block; margin-top: 10px; }
-    input, button { padding: 8px; margin-top: 5px; width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #eee; }
-    .success { color: green; font-weight: bold; }
-    .warning { color: red; font-weight: bold; }
+    :root { --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --accent:#2563eb; --good:#16a34a; --warn:#f59e0b; --bad:#ef4444; }
+    *{ box-sizing:border-box }
+    body{ margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg) }
+    .wrap{ max-width:1100px; margin:0 auto; padding:16px }
+    .grid{ display:grid; grid-template-columns:1fr; gap:12px }
+    @media(min-width:1000px){ .grid{ grid-template-columns:1.2fr .8fr } }
+    .card{ background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04) }
+    h1{ margin:8px 0 12px 0 } h2{ margin:0 0 10px 0; font-size:18px }
+    input,select,button{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--ring); font-size:16px; background:#fff }
+    button{ border:none; background:var(--accent); color:#fff; cursor:pointer }
+    .row{ display:flex; gap:8px; flex-wrap:wrap } .row>*{ flex:1 }
+    .muted{ color:var(--muted); font-size:14px }
+    .pill{ display:inline-block; padding:4px 8px; border-radius:999px; background:#eef2ff; color:#4338ca; font-size:12px }
+    .table{ width:100%; border-collapse: collapse } .table th,.table td{ padding:8px; border-bottom:1px dashed #e5e7eb; text-align:left; vertical-align:top }
+    .right{ text-align:right }
+    .bar{ height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden }
+    .bar>i{ display:block; height:100%; background:#22c55e; width:0% }
+    .good{ color:var(--good) } .warn{ color:var(--warn) } .bad{ color:var(--bad) }
   </style>
 </head>
 <body>
-  <h1>Gestionnaire de Budget</h1>
+  <div class="wrap">
+    <h1>Budget (PWA) – Reset & App</h1>
+    <p class="muted">Si tu venais d’une version précédente, cette page **désinstalle d’abord l’ancien Service Worker et vide son cache**, puis recharge une seule fois. Ensuite, elle installe le nouveau SW (v4).</p>
 
-  <div class="card">
-    <h2>Salaire</h2>
-    <label>Entrer votre salaire mensuel :</label>
-    <input type="number" id="salaireInput" placeholder="Ex: 263000">
-    <button onclick="enregistrerSalaire()">Enregistrer le salaire</button>
-    <p id="salaireAffiche"></p>
+    <div class="grid">
+      <!-- Colonne gauche -->
+      <div class="grid-col">
+        <div class="card">
+          <h2>1) Salaire mensuel</h2>
+          <div class="row">
+            <input id="salary" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)" />
+            <button id="saveSalary">Enregistrer</button>
+          </div>
+          <p class="muted">Valeur actuelle : <strong id="currentSalary">—</strong></p>
+        </div>
+
+        <div class="card">
+          <h2>2) Enveloppes de dépenses</h2>
+          <div class="row">
+            <input id="catName" placeholder="Nom (ex: Courses, Véhicule, Scolaire)" />
+            <input id="catBudget" type="number" inputmode="decimal" placeholder="Budget (DZD)" />
+            <button id="addCat">Ajouter</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
+            <tbody id="catsBody"></tbody>
+          </table>
+          <p><span class="pill">Total catégories : <span id="catsTotal">0</span> DZD</span></p>
+        </div>
+
+        <div class="card">
+          <h2>3) Dépenses</h2>
+          <div class="row">
+            <select id="txCat"></select>
+            <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
+          </div>
+          <div class="row">
+            <input id="txNote" placeholder="Note (facultatif)" />
+            <input id="txDate" type="date" />
+          </div>
+          <div class="row">
+            <button id="addTx">Ajouter dépense</button>
+            <button id="clearTx" class="bad">Vider l'historique</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr></thead>
+            <tbody id="txBody"></tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2>4) Épargne (enveloppes)</h2>
+          <div class="row">
+            <input id="savName" placeholder="Nom (Épargne, Loisir, Aménagement…)" />
+            <input id="savAmount" type="number" inputmode="decimal" placeholder="Montant alloué (DZD)" />
+            <button id="addSav">Allouer</button>
+          </div>
+          <table class="table">
+            <thead><tr><th>Enveloppe</th><th class="right">Montant</th><th></th></tr></thead>
+            <tbody id="savBody"></tbody>
+          </table>
+          <p><span class="pill">Total épargne allouée : <span id="savTotal">0</span> DZD</span></p>
+        </div>
+      </div>
+
+      <!-- Colonne droite -->
+      <div class="grid-col">
+        <div class="card">
+          <h2>Dashboard</h2>
+          <p>Salaire : <strong id="dashSalary">—</strong></p>
+          <p>Total budgets (dépenses) : <strong id="dashCats">—</strong></p>
+          <p>Total dépensé (mois courant) : <strong id="dashSpent">—</strong></p>
+          <p>Épargne théorique (Salaire − Dépenses) : <strong id="dashSave">—</strong></p>
+          <p>Épargne allouée (enveloppes) : <strong id="dashSavings">—</strong></p>
+          <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
+          <div class="bar"><i id="barSpent"></i></div>
+          <p class="muted">La barre montre le % dépensé vs salaire (mois en cours).</p>
+        </div>
+
+        <div class="card">
+          <h2>Projection annuelle (simple)</h2>
+          <div class="row">
+            <select id="yearSelect"></select>
+            <button id="refreshYear">Actualiser</button>
+          </div>
+          <div id="yearTableWrap"></div>
+        </div>
+
+        <div class="card">
+          <h2>Export / Import</h2>
+          <div class="row">
+            <button id="exportBtn">Exporter JSON</button>
+            <input id="importFile" type="file" accept="application/json" />
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div class="card">
-    <h2>Ajouter une enveloppe</h2>
-    <label>Nom de l'enveloppe :</label>
-    <input type="text" id="nomEnveloppe" placeholder="Épargne, Loisirs...">
-    <label>Montant :</label>
-    <input type="number" id="montantEnveloppe" placeholder="Ex: 40000">
-    <button onclick="ajouterEnveloppe()">Ajouter</button>
-  </div>
-
-  <div class="card">
-    <h2>Répartition des enveloppes</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Enveloppe</th>
-          <th>Montant</th>
-        </tr>
-      </thead>
-      <tbody id="listeEnveloppes"></tbody>
-    </table>
-    <p id="totalEnveloppes"></p>
-    <p id="resteSalaire"></p>
-  </div>
-
-  <div class="card">
-    <h2>Projection annuelle</h2>
-    <p id="projection"></p>
-  </div>
+  <!-- Script de RECOVERY SW + App inline (évite les soucis de fichiers externes) -->
+  <script>
+  (async function recoverAndRegisterSW(){
+    if (!('serviceWorker' in navigator)) return;
+    const flag = sessionStorage.getItem('sw_recovered_v4');
+    if (!flag) {
+      try {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        for (const r of regs) { await r.unregister(); }
+        if (window.caches) {
+          const keys = await caches.keys();
+          for (const k of keys) { await caches.delete(k); }
+        }
+      } catch(e) { /* ignore */ }
+      sessionStorage.setItem('sw_recovered_v4','1');
+      location.replace(location.href.split('#')[0]); // reload propre
+      return; // stop ici, on rechargera
+    } else {
+      // On est déjà revenu après nettoyage -> on enregistre le nouveau SW
+      navigator.serviceWorker.register('./sw.js?v=4').catch(()=>{});
+    }
+  })();
+  </script>
 
   <script>
-    let salaire = 0;
-    let enveloppes = [];
+  // ------- APP (LocalStorage – simple & fiable) -------
+  const $ = (id)=>document.getElementById(id);
+  const fmt = (n)=> new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0)) + " DZD";
+  const just= (n)=> new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
+  const today=()=> new Date().toISOString().slice(0,10);
+  const ymNow = ()=> new Date().toISOString().slice(0,7);
 
-    // Charger depuis LocalStorage
-    if(localStorage.getItem("salaire")) salaire = parseInt(localStorage.getItem("salaire"));
-    if(localStorage.getItem("enveloppes")) enveloppes = JSON.parse(localStorage.getItem("enveloppes"));
+  // State
+  let salary = Number(localStorage.getItem("salary")||0);
+  let cats   = JSON.parse(localStorage.getItem("cats")||"[]"); // {id,name,budget}
+  let tx     = JSON.parse(localStorage.getItem("tx")||"[]");   // {id,date,catId,amount,note}
+  let sav    = JSON.parse(localStorage.getItem("savings")||"[]"); // {id,name,amount}
 
-    afficherSalaire();
-    afficherEnveloppes();
+  // DOM refs
+  const salaryInput=$("salary"), saveSalary=$("saveSalary"), currentSalary=$("currentSalary");
+  const catName=$("catName"), catBudget=$("catBudget"), addCat=$("addCat"), catsBody=$("catsBody"), catsTotal=$("catsTotal");
+  const txCat=$("txCat"), txAmount=$("txAmount"), txNote=$("txNote"), txDate=$("txDate"), addTx=$("addTx"), clearTx=$("clearTx"), txBody=$("txBody");
+  const savName=$("savName"), savAmount=$("savAmount"), addSav=$("addSav"), savBody=$("savBody"), savTotal=$("savTotal");
+  const dashSalary=$("dashSalary"), dashCats=$("dashCats"), dashSpent=$("dashSpent"), dashSave=$("dashSave"), dashSavings=$("dashSavings"), dashLeft=$("dashLeft"), barSpent=$("barSpent");
+  const exportBtn=$("exportBtn"), importFile=$("importFile");
+  const yearSelect=$("yearSelect"), refreshYear=$("refreshYear"), yearTableWrap=$("yearTableWrap");
 
-    function enregistrerSalaire() {
-      const val = document.getElementById("salaireInput").value;
-      if(val && val > 0) {
-        salaire = parseInt(val);
-        localStorage.setItem("salaire", salaire);
-        afficherSalaire();
-        afficherEnveloppes();
-      } else {
-        alert("Veuillez entrer un salaire valide.");
-      }
+  txDate.value = today();
+
+  function saveLS(){ localStorage.setItem("salary",salary);
+    localStorage.setItem("cats",JSON.stringify(cats));
+    localStorage.setItem("tx",JSON.stringify(tx));
+    localStorage.setItem("savings",JSON.stringify(sav));
+  }
+
+  function computeSpentMonth(ym){
+    return tx.filter(t => (t.date||"").slice(0,7)===ym).reduce((s,t)=> s+Number(t.amount||0), 0);
+  }
+  function spentByCatMonth(ym){
+    const m={}; for(const t of tx){ if((t.date||"").slice(0,7)!==ym) continue; m[t.catId]=(m[t.catId]||0)+Number(t.amount||0); } return m;
+  }
+  function sumBudgets(){ return cats.reduce((s,c)=> s+Number(c.budget||0), 0); }
+  function totalSavings(){ return sav.reduce((s,g)=> s+Number(g.amount||0), 0); }
+  function theoreticalSave(ym){ return Math.max(0, (Number(salary)||0) - computeSpentMonth(ym)); }
+  function leftToAllocate(ym){ return Math.max(0, theoreticalSave(ym) - totalSavings()); }
+
+  function renderSalary(){
+    currentSalary.textContent = salary ? fmt(salary) : "—";
+    salaryInput.value = salary || "";
+    dashSalary.textContent = salary ? fmt(salary) : "—";
+  }
+  function renderCats(){
+    const sb = spentByCatMonth(ymNow());
+    let tot=0;
+    catsBody.innerHTML = cats.map(c=>{
+      tot += Number(c.budget||0);
+      return `<tr>
+        <td>${c.name}</td>
+        <td class="right">${fmt(c.budget||0)}</td>
+        <td class="right"><button data-del="${c.id}" style="background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:8px">Suppr.</button></td>
+      </tr>`;
+    }).join("");
+    catsTotal.textContent = just(tot);
+    dashCats.textContent = fmt(tot);
+    txCat.innerHTML = cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+  }
+  function renderTx(){
+    txBody.innerHTML = tx.slice().reverse().map(t=>{
+      const c = cats.find(x=>x.id===t.catId);
+      return `<tr><td>${t.date||"—"}</td><td>${c?c.name:"—"}</td><td>${t.note||""}</td><td class="right">${fmt(t.amount)}</td></tr>`;
+    }).join("");
+    const spent = computeSpentMonth(ymNow());
+    const theo  = theoreticalSave(ymNow());
+    dashSpent.textContent = fmt(spent);
+    dashSave.textContent  = fmt(theo);
+    dashSavings.textContent = fmt(totalSavings());
+    dashLeft.textContent = fmt(leftToAllocate(ymNow()));
+    const ratio = salary ? Math.min(100, Math.round((spent / salary) * 100)) : 0;
+    barSpent.style.width = ratio + "%";
+  }
+  function renderSav(){
+    savBody.innerHTML = sav.map(s=>`
+      <tr>
+        <td>${s.name}</td>
+        <td class="right">${fmt(s.amount||0)}</td>
+        <td class="right"><button data-del-s="${s.id}" style="background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:8px">Suppr.</button></td>
+      </tr>`).join("");
+    savTotal.textContent = just(totalSavings());
+  }
+
+  function renderYearSelect(){
+    const years=new Set([String(new Date().getFullYear())]);
+    for(const t of tx){ if(t.date) years.add(t.date.slice(0,4)); }
+    const arr=[...years].sort();
+    yearSelect.innerHTML = arr.map(y=>`<option value="${y}" ${y===String(new Date().getFullYear())?"selected":""}>${y}</option>`).join("");
+  }
+  function renderYearTable(y){
+    const months=["01","02","03","04","05","06","07","08","09","10","11","12"];
+    let rows="", sumSpent=0, sumTheo=0, sumSav=0;
+    for(const m of months){
+      const ym = `${y}-${m}`;
+      const spent=computeSpentMonth(ym);
+      const theo =theoreticalSave(ym);
+      const savA =totalSavings(); // modèle simple
+      sumSpent+=spent; sumTheo+=theo; sumSav+=savA;
+      rows+=`<tr><td>${ym}</td><td class="right">${fmt(spent)}</td><td class="right">${fmt(theo)}</td><td class="right">${fmt(savA)}</td></tr>`;
     }
+    yearTableWrap.innerHTML = `
+      <table class="table">
+        <thead><tr><th>Mois</th><th class="right">Dépensé</th><th class="right">Épargne théorique</th><th class="right">Épargne allouée</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr><th>Total ${y}</th><th class="right">${fmt(sumSpent)}</th><th class="right">${fmt(sumTheo)}</th><th class="right">${fmt(sumSav)}</th></tr></tfoot>
+      </table>
+    `;
+  }
 
-    function afficherSalaire() {
-      if(salaire > 0) {
-        document.getElementById("salaireAffiche").innerHTML = 
-          "💰 Salaire enregistré : " + salaire.toLocaleString() + " DZD";
-      }
-    }
+  // Events
+  $("saveSalary").addEventListener("click", ()=>{
+    const v = Number(($("salary").value||0));
+    if(!v) return alert("Entre un salaire valide.");
+    if(sumBudgets()>v && !confirm("Tes budgets de catégories dépassent ce salaire. Continuer ?")) return;
+    salary=v; saveLS(); renderSalary(); renderTx();
+  });
 
-    function ajouterEnveloppe() {
-      const nom = document.getElementById("nomEnveloppe").value.trim();
-      const montant = parseInt(document.getElementById("montantEnveloppe").value);
+  $("addCat").addEventListener("click", ()=>{
+    const name = (catName.value||"").trim();
+    const bud  = Number(catBudget.value||0);
+    if(!name || !bud) return alert("Nom et budget obligatoires.");
+    const id = crypto.randomUUID();
+    if (salary && (sumBudgets()+bud)>salary) return alert("La somme des budgets dépasse le salaire.");
+    cats.push({id,name,budget:bud}); saveLS(); catName.value=""; catBudget.value=""; renderCats(); renderTx();
+  });
 
-      if(nom && montant > 0) {
-        enveloppes.push({ nom, montant });
-        localStorage.setItem("enveloppes", JSON.stringify(enveloppes));
-        afficherEnveloppes();
-        document.getElementById("nomEnveloppe").value = "";
-        document.getElementById("montantEnveloppe").value = "";
-      } else {
-        alert("Veuillez entrer un nom et un montant valide.");
-      }
-    }
+  $("catsBody").addEventListener("click",(e)=>{
+    const b=e.target.closest("button[data-del]"); if(!b) return;
+    const id=b.getAttribute("data-del");
+    if(!confirm("Supprimer cette catégorie (et ses dépenses) ?")) return;
+    tx = tx.filter(t=>t.catId!==id);
+    cats = cats.filter(c=>c.id!==id);
+    saveLS(); renderCats(); renderTx();
+  });
 
-    function afficherEnveloppes() {
-      const tbody = document.getElementById("listeEnveloppes");
-      tbody.innerHTML = "";
-      let total = 0;
+  $("addTx").addEventListener("click", ()=>{
+    if(!cats.length) return alert("Crée d'abord une catégorie.");
+    const catId=txCat.value;
+    const amount=Number(txAmount.value||0);
+    if(!amount || amount<=0) return alert("Montant invalide.");
+    tx.push({id:crypto.randomUUID(),date:txDate.value||today(),catId,amount,note:(txNote.value||"").trim()});
+    saveLS(); txAmount.value=""; txNote.value=""; renderCats(); renderTx();
+  });
 
-      enveloppes.forEach(env => {
-        total += env.montant;
-        tbody.innerHTML += `<tr><td>${env.nom}</td><td>${env.montant.toLocaleString()} DZD</td></tr>`;
-      });
+  $("clearTx").addEventListener("click", ()=>{
+    if(!confirm("Supprimer tout l'historique des dépenses ?")) return;
+    tx=[]; saveLS(); renderCats(); renderTx();
+  });
 
-      document.getElementById("totalEnveloppes").innerHTML = "📊 Total enveloppes : " + total.toLocaleString() + " DZD";
+  $("addSav").addEventListener("click", ()=>{
+    const name=(savName.value||"").trim();
+    const amount=Number(savAmount.value||0);
+    if(!name || !amount) return alert("Nom et montant obligatoires.");
+    const left = leftToAllocate(ymNow());
+    if (amount>left) return alert("Montant supérieur au reste à allouer du mois.");
+    const existing = sav.find(s=>s.name.toLowerCase()===name.toLowerCase());
+    if (existing){ existing.amount = amount; }
+    else { sav.push({id:crypto.randomUUID(),name,amount}); }
+    saveLS(); savName.value=""; savAmount.value=""; renderSav(); renderTx();
+  });
 
-      if(salaire > 0) {
-        let reste = salaire - total;
-        document.getElementById("resteSalaire").innerHTML = reste >= 0
-          ? `<span class="success">✅ Reste disponible : ${reste.toLocaleString()} DZD</span>`
-          : `<span class="warning">⚠️ Dépassement de budget : ${reste.toLocaleString()} DZD</span>`;
-        
-        document.getElementById("projection").innerHTML = 
-          "Sur 12 mois, vous pouvez épargner environ : " + (reste * 12).toLocaleString() + " DZD";
-      }
-    }
+  $("savBody").addEventListener("click",(e)=>{
+    const b=e.target.closest("button[data-del-s]"); if(!b) return;
+    const id=b.getAttribute("data-del-s");
+    if(!confirm("Supprimer cette enveloppe d’épargne ?")) return;
+    sav = sav.filter(s=>s.id!==id); saveLS(); renderSav(); renderTx();
+  });
+
+  $("exportBtn").addEventListener("click", ()=>{
+    const data = { salary, cats, tx, savings:sav };
+    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a=document.createElement("a"); a.href=url; a.download="budget-data.json"; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  $("importFile").addEventListener("change", async (e)=>{
+    const f=e.target.files?.[0]; if(!f) return;
+    try{
+      const text=await f.text(); const data=JSON.parse(text);
+      salary=Number(data.salary||0);
+      cats=Array.isArray(data.cats)?data.cats:[]; 
+      tx=Array.isArray(data.tx)?data.tx:[];
+      sav=Array.isArray(data.savings)?data.savings:[];
+      saveLS(); renderAll();
+      alert("Import OK.");
+    }catch{ alert("Fichier invalide."); }
+  });
+
+  $("refreshYear").addEventListener("click", ()=> renderYearTable(yearSelect.value||String(new Date().getFullYear())));
+
+  function renderAll(){
+    renderSalary(); renderCats(); renderTx(); renderSav(); renderYearSelect(); renderYearTable(String(new Date().getFullYear()));
+  }
+  renderAll();
   </script>
 </body>
 </html>
