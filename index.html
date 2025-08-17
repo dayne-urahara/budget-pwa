@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Budget & Épargne – auto-allocation + priorités</title>
+<title>Budget & Épargne – drag & drop + projection</title>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--ring:#e5e7eb;--accent:#2563eb;--good:#16a34a;--bad:#ef4444}
+  :root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--ring:#e5e7eb;--accent:#2563eb;--good:#16a34a;--bad:#ef4444;--warn:#f59e0b}
   *{box-sizing:border-box}
   body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
   header{background:#111827;color:#fff;padding:16px}
@@ -13,12 +13,13 @@
   nav{display:flex;background:#1f2937}
   nav button{flex:1;padding:12px 10px;border:none;background:#1f2937;color:#fff;cursor:pointer;font-size:16px}
   nav button.active{background:#0b1220;font-weight:600}
-  .wrap{max-width:1100px;margin:0 auto;padding:16px}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
   .page{display:none}.page.active{display:block}
   .grid{display:grid;grid-template-columns:1fr;gap:12px}
   @media(min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
   .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
   h2{margin:0 0 10px 0;font-size:18px}
+  h3{margin:10px 0 8px 0;font-size:16px}
   input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ring);font-size:16px;background:#fff}
   button.btn{border:none;background:var(--accent);color:#fff;cursor:pointer}
   .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
@@ -35,10 +36,17 @@
   .tag{padding:2px 8px;border-radius:999px;font-size:12px;background:#f1f5f9}
   .prio{display:flex;gap:6px}
   .prio button{padding:6px 8px;border-radius:8px}
+  /* Drag & Drop styles */
+  tbody.dropzone{border:2px dashed #cbd5e1;border-radius:12px}
+  tr.dragging{opacity:.5}
+  tr.drop-hint{outline:2px solid #a5b4fc}
+  .envHeader{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;margin-top:10px}
+  .hint{padding:10px;border-radius:12px;background:#f8fafc;border:1px dashed #e2e8f0;font-size:14px}
+  .warn{color:var(--warn);font-weight:600}
 </style>
 </head>
 <body>
-<header><h1>Budget & Épargne – auto-allocation + priorités</h1></header>
+<header><h1>Budget & Épargne – drag & drop + projection</h1></header>
 <nav>
   <button id="btnBudget" class="active" onclick="showPage('budget')">💰 Budget</button>
   <button id="btnEpargne" onclick="showPage('epargne')">📊 Épargne & Projets</button>
@@ -79,7 +87,7 @@
           <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
           <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
         </div>
-        <p class="muted">La répartition respecte **l’ordre de priorité** des projets de l’enveloppe (le premier en haut est servi d’abord).</p>
+        <p class="muted">La répartition respecte **l’ordre de priorité** des projets de l’enveloppe (drag & drop ou ⬆️⬇️).</p>
       </div>
 
       <div class="card">
@@ -112,7 +120,7 @@
   <!-- PAGE ÉPARGNE & PROJETS -->
   <div id="epargne" class="page">
     <div class="card">
-      <h2>Projets par enveloppe (priorités haut/bas)</h2>
+      <h2>Projets par enveloppe (drag & drop + priorités)</h2>
       <div class="row">
         <select id="projEnv"></select>
         <input id="projNom" placeholder="Nom du projet (ex: Meuble salle de bain)"/>
@@ -121,12 +129,25 @@
         <input id="projPrix" type="number" inputmode="decimal" placeholder="Objectif (DZD)"/>
         <button class="btn" onclick="addProjet()">Créer projet</button>
       </div>
-      <p class="muted">Réorganise l’ordre des projets (⬆️⬇️) pour changer **la priorité de financement**. La progression passe en vert ✅ dès que l’objectif est atteint.</p>
+      <p class="muted">Réorganise par **glisser-déposer** (ou ⬆️⬇️) pour changer l’ordre de financement. Le projet **en haut** est servi **en premier**.</p>
 
-      <table class="table">
-        <thead><tr><th>Projet</th><th>Enveloppe</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th>Priorité</th><th></th></tr></thead>
-        <tbody id="projBody"></tbody>
-      </table>
+      <!-- Groupes d’enveloppes + tables projets -->
+      <div id="projGroups"></div>
+    </div>
+
+    <div class="card">
+      <h2>Projection 12 mois (par enveloppe & projets)</h2>
+      <div class="row">
+        <label for="avgMonths" class="muted">Moyenne mensuelle basée sur :</label>
+        <select id="avgMonths">
+          <option value="3" selected>3 derniers mois</option>
+          <option value="6">6 derniers mois</option>
+          <option value="12">12 derniers mois</option>
+        </select>
+        <button class="btn" onclick="renderProjection()">Recalculer</button>
+      </div>
+      <div id="projectionWrap"></div>
+      <div class="hint" id="compassBox">Conseils en fonction de tes versements et objectifs…</div>
     </div>
   </div>
 </div>
@@ -144,7 +165,7 @@ let REVENUS_SUPP = Number(localStorage.getItem("REVENUS_SUPP")||0);
 let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");  // {id,name,totalIn}
 let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");   // {id,date,envId,amount}
 
-// Projets liés à enveloppes (avec priorité)
+// Projets liés à enveloppes (avec priority)
 let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");     // {id,name,envId,target,saved,done,priority}
 let PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");  // {id,date,projectId,amount,envId}
 
@@ -170,7 +191,7 @@ function showPage(id){
   (id==="budget"?$("btnBudget"):$("btnEpargne")).classList.add("active");
 }
 
-/* ========= Calculs ========= */
+/* ========= Calculs de base ========= */
 function sumDepBudgets(){ return DEP_ENV.reduce((s,c)=>s+Number(c.budget||0),0); }
 function totalRevenus(){ return (Number(SALAIRE)||0) + (Number(REVENUS_SUPP)||0); }
 function totalSavAlloue(){ return SAV_ENV.reduce((s,e)=> s + Number(e.totalIn||0), 0); }
@@ -215,7 +236,8 @@ function verserEpargne(){
   if(!amount){ alert("Montant invalide."); return; }
 
   // log enveloppe
-  SAV_TX.push({id:crypto.randomUUID(),date:new Date().toISOString().slice(0,10),envId,amount});
+  const today = new Date().toISOString().slice(0,10);
+  SAV_TX.push({id:crypto.randomUUID(),date:today,envId,amount});
   const env = SAV_ENV.find(e=>e.id===envId);
   env.totalIn = Number(env.totalIn||0) + amount;
 
@@ -232,7 +254,7 @@ function verserEpargne(){
     if(need<=0){ p.done=true; continue; }
     const take = Math.min(need, remain);
     p.saved = Number(p.saved||0) + take;
-    PROJ_TX.push({id:crypto.randomUUID(),date:new Date().toISOString().slice(0,10),projectId:p.id,amount:take,envId});
+    PROJ_TX.push({id:crypto.randomUUID(),date:today,projectId:p.id,amount:take,envId});
     if(p.saved >= p.target){ p.done = true; }
     remain -= take;
   }
@@ -240,7 +262,7 @@ function verserEpargne(){
   persist(); renderAll();
 }
 
-/* ========= Projets (création + priorités) ========= */
+/* ========= Projets (création + priorités + drag & drop) ========= */
 function getNextPriority(envId){
   const ps = PROJ.filter(p=>p.envId===envId);
   if(!ps.length) return 0;
@@ -248,12 +270,10 @@ function getNextPriority(envId){
 }
 function ensurePriorities(envId){
   const ps = PROJ.filter(p=>p.envId===envId);
-  // si certains n’ont pas de priority, on normalise en séquence 0..n-1 selon l’ordre actuel d’affichage
   if (ps.some(p=>p.priority===undefined)){
     ps.sort((a,b)=> (a.priority??Number.MAX_SAFE_INTEGER) - (b.priority??Number.MAX_SAFE_INTEGER));
     ps.forEach((p,i)=> p.priority=i);
   } else {
-    // aussi : compacter (éviter 0,2,5…)
     ps.sort((a,b)=> (a.priority - b.priority));
     ps.forEach((p,i)=> p.priority=i);
   }
@@ -279,28 +299,180 @@ function delProjet(id){
 function moveProject(id, dir){ // dir = -1 (up) | +1 (down)
   const p = PROJ.find(x=>x.id===id); if(!p) return;
   ensurePriorities(p.envId);
-  const siblings = PROJ.filter(x=>x.envId===p.envId).sort((a,b)=>a.priority-b.priority);
-  const idx = siblings.findIndex(x=>x.id===id);
-  const swapIdx = idx + dir;
-  if (swapIdx<0 || swapIdx>=siblings.length) return; // rien à faire
-  // swap priorities
-  const a = siblings[idx], b = siblings[swapIdx];
-  const tmp = a.priority; a.priority = b.priority; b.priority = tmp;
+  const sib = PROJ.filter(x=>x.envId===p.envId).sort((a,b)=>a.priority-b.priority);
+  const idx = sib.findIndex(x=>x.id===id);
+  const j = idx + dir;
+  if (j<0 || j>=sib.length) return;
+  const a=sib[idx], b=sib[j];
+  const tmp=a.priority; a.priority=b.priority; b.priority=tmp;
   persist(); renderAll();
 }
 
-/* ========= Dépenses budgétées (facultatif) ========= */
-function addDepenseEnv(){
-  const name = ($("depNom").value||"").trim();
-  const bud  = Number(($("depMontant").value||0));
-  if(!name || !bud){ alert("Nom et budget requis."); return; }
-  DEP_ENV.push({id:crypto.randomUUID(),name,budget:bud});
-  $("depNom").value=""; $("depMontant").value="";
-  persist(); renderAll();
+/* ---- Drag & Drop intra-enveloppe ---- */
+let dragState = { id:null, envId:null };
+
+function attachDnD(){
+  // pour chaque tbody.dropzone, on branche les handlers
+  document.querySelectorAll('tbody.dropzone').forEach(tbody=>{
+    tbody.addEventListener('dragover', (e)=>{ e.preventDefault(); const tr = e.target.closest('tr[data-id]'); if(tr) tr.classList.add('drop-hint'); });
+    tbody.addEventListener('dragleave', (e)=>{ const tr = e.target.closest('tr[data-id]'); if(tr) tr.classList.remove('drop-hint'); });
+    tbody.addEventListener('drop', (e)=>{
+      e.preventDefault();
+      const zone = e.currentTarget;
+      if (!dragState.id || dragState.envId !== zone.dataset.envId) return; // on n’autorise que dans la même enveloppe
+      const rows = Array.from(zone.querySelectorAll('tr[data-id]'));
+      const targetRow = e.target.closest('tr[data-id]');
+      rows.forEach(r=>r.classList.remove('drop-hint'));
+      // on calcule la nouvelle position : on insère avant targetRow (si existe), sinon à la fin
+      const draggedId = dragState.id;
+      const orderIds = rows.map(r=>r.dataset.id).filter(x=>x!==draggedId);
+      if (targetRow) {
+        const idx = rows.findIndex(r=>r===targetRow);
+        orderIds.splice(idx, 0, draggedId);
+      } else {
+        orderIds.push(draggedId);
+      }
+      // met à jour les priorities selon l'ordre DOM calculé
+      orderIds.forEach((pid, i)=>{
+        const p = PROJ.find(x=>x.id===pid);
+        if (p) p.priority = i;
+      });
+      persist(); renderAll();
+      dragState.id=null; dragState.envId=null;
+    });
+  });
+
+  // chaque ligne projet devient draggable
+  document.querySelectorAll('tr[data-id]').forEach(tr=>{
+    tr.setAttribute('draggable','true');
+    tr.addEventListener('dragstart', ()=>{
+      tr.classList.add('dragging');
+      dragState.id = tr.dataset.id;
+      dragState.envId = tr.dataset.envId;
+    });
+    tr.addEventListener('dragend', ()=>{
+      tr.classList.remove('dragging');
+    });
+  });
 }
-function delDepenseEnv(id){
-  DEP_ENV = DEP_ENV.filter(e=>e.id!==id);
-  persist(); renderAll();
+
+/* ========= Projection 12 mois ========= */
+function addMonths(date, n){
+  const d = new Date(date.getFullYear(), date.getMonth()+n, 1);
+  // garder la fin de mois simple : on affiche AAAA-MM
+  return d;
+}
+function monthKey(dt){ return dt.toISOString().slice(0,7); }
+function monthsBack(n){
+  const arr=[]; const d=new Date();
+  for(let i=0;i<n;i++){ const dd=new Date(d.getFullYear(), d.getMonth()-i, 1); arr.push(monthKey(dd)); }
+  return arr; // [YYYY-MM (courant), -1, ...]
+}
+function avgMonthlyForEnv(envId, monthsWindow){
+  const keys = monthsBack(monthsWindow);
+  const sums = {};
+  for(const k of keys) sums[k]=0;
+  for(const t of SAV_TX){
+    if(t.envId!==envId) continue;
+    const k = (t.date||"").slice(0,7);
+    if (keys.includes(k)) sums[k] += Number(t.amount||0);
+  }
+  const total = keys.reduce((s,k)=> s + (sums[k]||0), 0);
+  return total / keys.length;
+}
+
+function computeProjectionData(monthsWindow){
+  // retourne des lignes {envName, envId, avg, projectName, remaining, months, etaDate, withinYear, done}
+  const rows=[];
+  for(const env of SAV_ENV){
+    const avg = avgMonthlyForEnv(env.id, monthsWindow);
+    // l’ordre = priorité
+    const list = PROJ
+      .filter(p=>p.envId===env.id)
+      .sort((a,b)=>(a.priority??0)-(b.priority??0));
+    let cursorMonth = 0; // cumul mois pour ETA séquentielle
+    for(const p of list){
+      const remaining = Math.max(0, Number(p.target||0)-Number(p.saved||0));
+      if (remaining===0){
+        rows.push({envName:env.name, envId:env.id, avg, projectName:p.name, remaining:0, months:0, etaDate:new Date(), withinYear:true, done:true});
+        continue;
+      }
+      if (avg<=0){
+        rows.push({envName:env.name, envId:env.id, avg, projectName:p.name, remaining, months:Infinity, etaDate:null, withinYear:false, done:false});
+        continue;
+      }
+      const mNeeded = Math.ceil(remaining / avg);
+      cursorMonth += mNeeded;
+      const eta = addMonths(new Date(), cursorMonth);
+      rows.push({envName:env.name, envId:env.id, avg, projectName:p.name, remaining, months:mNeeded, etaDate:eta, withinYear: cursorMonth<=12, done:false});
+    }
+  }
+  return rows;
+}
+
+function renderProjection(){
+  const win = Number(($("avgMonths").value||3));
+  const rows = computeProjectionData(win);
+
+  if(!rows.length){
+    $("projectionWrap").innerHTML = `<p class="muted">Aucun projet ou enveloppe d’épargne pour l’instant.</p>`;
+    $("compassBox").textContent = "Ajoute une enveloppe d’épargne et au moins un projet pour voir la projection.";
+    return;
+  }
+
+  // construire un tableau groupé par enveloppe
+  const byEnv = {};
+  for(const r of rows){
+    if(!byEnv[r.envId]) byEnv[r.envId] = {name:r.envName, avg:r.avg, items:[]};
+    byEnv[r.envId].items.push(r);
+  }
+
+  let html = "";
+  for(const envId of Object.keys(byEnv)){
+    const group = byEnv[envId];
+    html += `
+      <div class="envHeader"><strong>Enveloppe :</strong> ${group.name} — <span class="muted">Moyenne mensuelle (${win} mois) :</span> <strong>${fmt(group.avg||0)}</strong></div>
+      <table class="table">
+        <thead><tr><th>Projet</th><th class="right">Restant</th><th class="right">Mois estimés</th><th>Date estimée</th><th>Statut</th></tr></thead>
+        <tbody>
+          ${
+            group.items.map(it=>{
+              const eta = it.etaDate ? it.etaDate.toLocaleString("fr-DZ",{year:"numeric", month:"long"}) : "—";
+              let statut = "";
+              if (it.done) statut = `<span class="success">Atteint ✅</span>`;
+              else if (!isFinite(it.months)) statut = `<span class="warn">Aucun versement récent</span>`;
+              else statut = it.withinYear ? `<span class="success">≤ 12 mois</span>` : `<span class="muted">> 12 mois</span>`;
+              return `<tr>
+                <td>${it.projectName}</td>
+                <td class="right">${fmt(it.remaining)}</td>
+                <td class="right">${isFinite(it.months)? it.months : "∞"}</td>
+                <td>${eta}</td>
+                <td>${statut}</td>
+              </tr>`;
+            }).join("")
+          }
+        </tbody>
+      </table>
+    `;
+  }
+  $("projectionWrap").innerHTML = html;
+
+  // Boussole simple
+  const tips = [];
+  // env sans versement
+  const starved = Object.values(byEnv).filter(g=> (g.avg||0)===0 && g.items.some(i=>!i.done));
+  if (starved.length){
+    tips.push(`<div class="warn">Aucune moyenne de versement sur : ${starved.map(g=>`<strong>${g.name}</strong>`).join(", ")}. Fixe un versement mensuel minimal.</div>`);
+  }
+  // projets > 12 mois
+  const longies = rows.filter(r=>!r.done && isFinite(r.months) && !r.withinYear);
+  if (longies.length){
+    tips.push(`<div>Plusieurs objectifs dépassent 12 mois. Options : augmenter le versement des enveloppes concernées, ou remonter la priorité de projets plus stratégiques.</div>`);
+  }
+  if (!tips.length){
+    tips.push(`<div class="success">Cap OK : tes enveloppes et priorités mènent à des objectifs atteignables dans l’année.</div>`);
+  }
+  $("compassBox").innerHTML = tips.map(t=>`<p>${t}</p>`).join("");
 }
 
 /* ========= Rendering ========= */
@@ -339,54 +511,78 @@ function renderBudget(){
   $("barSpent").style.width = ratio + "%";
 }
 
-function renderEpargne(){
-  $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+/* --- Rendu projets groupés par enveloppe avec DnD --- */
+function renderProjectsGrouped(){
+  // groupe par enveloppe
+  const groups = {};
+  for(const e of SAV_ENV){ groups[e.id] = { name:e.name, id:e.id, items:[] }; }
+  for(const p of PROJ){ if(groups[p.envId]) groups[p.envId].items.push(p); }
 
-  // Pour un affichage clair : trier globalement par enveloppe puis par priority
-  const projSorted = PROJ.slice().sort((a,b)=>{
-    const ea = SAV_ENV.find(e=>e.id===a.envId)?.name || "";
-    const eb = SAV_ENV.find(e=>e.id===b.envId)?.name || "";
-    if (ea !== eb) return ea.localeCompare(eb);
-    return (a.priority??0) - (b.priority??0);
+  // tri par priorité et rendu
+  let html = "";
+  const envIds = Object.keys(groups).sort((a,b)=> groups[a].name.localeCompare(groups[b].name));
+  envIds.forEach(envId=>{
+    // normalise priorités
+    ensurePriorities(envId);
+    const g = groups[envId];
+    const items = g.items.slice().sort((a,b)=>(a.priority??0)-(b.priority??0));
+    html += `
+      <div class="envHeader"><strong>Enveloppe :</strong> ${g.name}</div>
+      <table class="table">
+        <thead><tr><th>Projet</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th>Priorité</th><th></th></tr></thead>
+        <tbody class="dropzone" data-env-id="${g.id}">
+          ${items.map(p=>{
+            const pct = p.target ? Math.min(100, Math.round((Number(p.saved||0)/Number(p.target))*100)) : 0;
+            const status = (p.done || p.saved>=p.target) ? `<span class="success">Atteint ✅</span>` : `${pct}%`;
+            return `
+              <tr data-id="${p.id}" data-env-id="${p.envId}">
+                <td>${p.name}</td>
+                <td class="right">${fmt(p.target)}</td>
+                <td class="right">${fmt(p.saved||0)}</td>
+                <td>
+                  <div class="bar"><i style="width:${pct}%"></i></div>
+                  <div class="muted">${status}</div>
+                </td>
+                <td>
+                  <div class="prio">
+                    <button class="ghost" onclick="moveProject('${p.id}', -1)">⬆️</button>
+                    <button class="ghost" onclick="moveProject('${p.id}', 1)">⬇️</button>
+                  </div>
+                  <div class="muted">rang: ${p.priority??0}</div>
+                </td>
+                <td class="right"><button class="danger" onclick="delProjet('${p.id}')">Suppr.</button></td>
+              </tr>
+            `;
+          }).join("")}
+        </tbody>
+      </table>
+    `;
   });
 
-  $("projBody").innerHTML = projSorted.map(p=>{
-    const env = SAV_ENV.find(e=>e.id===p.envId);
-    const pct = p.target ? Math.min(100, Math.round((Number(p.saved||0)/Number(p.target))*100)) : 0;
-    const status = (p.done || p.saved>=p.target)
-      ? `<span class="success">Atteint ✅</span>`
-      : `${fmt(p.saved||0)} / ${fmt(p.target)}`;
-    return `
-      <tr>
-        <td>${p.name}</td>
-        <td>${env?env.name:"—"}</td>
-        <td class="right">${fmt(p.target)}</td>
-        <td class="right">${fmt(p.saved||0)}</td>
-        <td>
-          <div class="bar"><i style="width:${pct}%"></i></div>
-          <div class="muted">${pct}%</div>
-        </td>
-        <td>
-          <div class="prio">
-            <button class="ghost" onclick="moveProject('${p.id}', -1)">⬆️ Haut</button>
-            <button class="ghost" onclick="moveProject('${p.id}', 1)">⬇️ Bas</button>
-          </div>
-          <div class="muted">rang: ${p.priority??0}</div>
-        </td>
-        <td class="right"><button class="danger" onclick="delProjet('${p.id}')">Suppr.</button></td>
-      </tr>
-    `;
-  }).join("");
+  $("projGroups").innerHTML = html;
+  attachDnD();
 }
 
-function renderAll(){ renderBudget(); renderEpargne(); }
+function renderEpargne(){
+  // sélecteur d’enveloppe pour créer projet
+  $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
+  renderProjectsGrouped();
+  renderProjection();
+}
 
-// Boot : compat pour anciens projets (sans priority)
-(function initPriorities(){
+function renderAll(){
+  $("nowMonth").textContent = new Date().toLocaleString("fr-DZ",{month:"long",year:"numeric"});
+  renderBudget();
+  renderEpargne();
+}
+
+/* ========= Boot ========= */
+(function init(){
+  // compat anciens projets : assigne des priorités
   const envIds = [...new Set(PROJ.map(p=>p.envId))];
   envIds.forEach(ensurePriorities);
+  renderAll();
 })();
-renderAll();
 </script>
 </body>
 </html>
