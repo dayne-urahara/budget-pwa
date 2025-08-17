@@ -1,173 +1,128 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <title>Budget – PWA (Enveloppes, Épargne, Projection & Boussole)</title>
-
-  <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Budget Mensuel</title>
   <style>
-    :root { --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --accent:#2563eb; --good:#16a34a; --warn:#f59e0b; --bad:#ef4444; }
-    *{ box-sizing:border-box }
-    body{ margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg) }
-    .wrap{ max-width:1200px; margin:0 auto; padding:16px }
-    .grid{ display:grid; grid-template-columns:1fr; gap:12px }
-    @media(min-width:1100px){ .grid{ grid-template-columns:1.3fr .7fr } }
-    .card{ background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04) }
-    h1{ margin:8px 0 12px 0 } h2{ margin:0 0 10px 0; font-size:18px }
-    input,select,button,textarea{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--ring); font-size:16px; background:#fff }
-    button{ border:none; background:var(--accent); color:#fff; cursor:pointer }
-    .row{ display:flex; gap:8px; flex-wrap:wrap } .row>*{ flex:1 }
-    .muted{ color:var(--muted); font-size:14px }
-    .pill{ display:inline-block; padding:4px 8px; border-radius:999px; background:#eef2ff; color:#4338ca; font-size:12px }
-    .table{ width:100%; border-collapse: collapse } .table th,.table td{ padding:8px; border-bottom:1px dashed #e5e7eb; text-align:left; vertical-align:top }
-    .bar{ height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden }
-    .bar>i{ display:block; height:100%; background:#22c55e; width:0% }
-    .right{ text-align:right }
-    .actions{ display:flex; gap:8px; align-items:center; flex-wrap:wrap }
-    .danger{ background:#ef4444 }
-    .ghost{ background:#111827; color:#fff }
-    .hint{ padding:10px; border-radius:12px; background:#f8fafc; border:1px dashed #e2e8f0; font-size:14px }
-    .good{ color:var(--good) } .warn{ color:var(--warn) } .bad{ color:var(--bad) }
-    .tag{ padding:2px 8px; border-radius:999px; font-size:12px; background:#f1f5f9; }
+    body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+    h1, h2 { color: #333; }
+    .card { background: white; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    label { display: block; margin-top: 10px; }
+    input, button { padding: 8px; margin-top: 5px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #eee; }
+    .success { color: green; font-weight: bold; }
+    .warning { color: red; font-weight: bold; }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Budget (PWA) – Enveloppes, Épargne, Projection & Boussole</h1>
-    <p class="muted">Offline (IndexedDB). Export/Import JSON. Ajoute à l’écran d’accueil via Safari → Partager → “Ajouter à l’écran d’accueil”.</p>
+  <h1>Gestionnaire de Budget</h1>
 
-    <div class="grid">
-      <!-- Colonne gauche -->
-      <div class="grid-col">
-
-        <div class="card">
-          <h2>1) Paramètres mensuels</h2>
-          <div class="row">
-            <input id="salary" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)" />
-            <button id="saveSalary">Enregistrer</button>
-          </div>
-          <p class="muted">Valeur actuelle : <strong id="currentSalary">—</strong></p>
-        </div>
-
-        <div class="card">
-          <h2>2) Enveloppes (catégories de dépenses)</h2>
-          <div class="row">
-            <input id="catName" placeholder="Nom (ex: Courses, Scolaire, Véhicule)" />
-            <input id="catBudget" type="number" inputmode="decimal" placeholder="Budget (DZD)" />
-            <button id="addCat">Ajouter</button>
-          </div>
-          <p class="muted">Astuce : commence par tes enveloppes fixes (Courses, Voyages, Enfants/Épouse, Maison, Véhicule, Scolaire, Perso, etc.).</p>
-
-          <table class="table" id="catsTable">
-            <thead>
-              <tr><th>Catégorie</th><th class="right">Budget</th><th class="right">Dépensé</th><th class="right">Restant</th><th></th></tr>
-            </thead>
-            <tbody id="catsBody"></tbody>
-          </table>
-          <p><span class="pill">Total catégories : <span id="catsTotal">0</span> DZD</span></p>
-        </div>
-
-        <div class="card">
-          <h2>3) Dépenses</h2>
-          <div class="row">
-            <select id="txCat"></select>
-            <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
-          </div>
-          <div class="row">
-            <input id="txNote" placeholder="Note (facultatif)" />
-            <input id="txDate" type="date" />
-          </div>
-          <div class="row">
-            <button id="addTx">Ajouter dépense</button>
-            <button id="clearTx" class="danger">Vider l'historique</button>
-          </div>
-
-          <table class="table" id="txTable">
-            <thead>
-              <tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr>
-            </thead>
-            <tbody id="txBody"></tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>4) Épargne (budgétisée & pilotable)</h2>
-          <div class="row">
-            <input id="savName" placeholder="Nom (ex: Épargne, Loisir, Aménagement)" />
-            <input id="savTarget" type="number" inputmode="decimal" placeholder="Objectif (cible DZD)" />
-          </div>
-          <div class="row">
-            <input id="savAmount" type="number" inputmode="decimal" placeholder="Montant alloué (DZD)" />
-            <button id="addSav">Créer/Allouer</button>
-          </div>
-          <p class="muted">Règle : Épargne allouée ≤ (Salaire − Dépenses). Tu peux éditer le montant et la cible à tout moment.</p>
-
-          <table class="table">
-            <thead>
-              <tr><th>Enveloppe</th><th class="right">Alloué</th><th class="right">Cible</th><th>Progression</th><th></th></tr>
-            </thead>
-            <tbody id="savBody"></tbody>
-          </table>
-          <p><span class="pill">Total épargne allouée : <span id="savTotal">0</span> DZD</span></p>
-        </div>
-
-        <div class="card">
-          <h2>5) Projection annuelle</h2>
-          <div class="row">
-            <select id="yearSelect"></select>
-            <button id="refreshYear">Actualiser</button>
-          </div>
-          <div id="yearTableWrap"></div>
-        </div>
-
-      </div>
-
-      <!-- Colonne droite -->
-      <div class="grid-col">
-        <div class="card">
-          <h2>Dashboard & Boussole</h2>
-          <p class="muted"><span class="tag" id="nowMonthTag"></span></p>
-          <p>Salaire : <strong id="dashSalary">—</strong></p>
-          <p>Total budgets (dépenses) : <strong id="dashCats">—</strong></p>
-          <p>Total dépensé (mois en cours) : <strong id="dashSpent">—</strong></p>
-          <p>Épargne théorique (Salaire − Dépenses) : <strong id="dashSave">—</strong></p>
-          <p>Épargne allouée (enveloppes) : <strong id="dashSavings">—</strong></p>
-          <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
-
-          <div class="bar"><i id="barSpent"></i></div>
-          <p class="muted">% dépensé vs salaire (mois en cours).</p>
-
-          <div id="catBars"></div>
-
-          <div class="hint" id="compassBox">Conseils dynamiques en fonction de ton rythme de dépense et de ton reste à allouer…</div>
-
-          <div class="actions" style="margin-top:12px">
-            <button id="exportBtn" class="ghost">Exporter JSON</button>
-            <input id="importFile" type="file" accept="application/json" />
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Raccourcis</h2>
-          <button id="seedDz">Précharger enveloppes DZ (exemple)</button>
-          <p class="muted">Tu pourras les modifier/supprimer ensuite.</p>
-        </div>
-      </div>
-    </div>
+  <div class="card">
+    <h2>Salaire</h2>
+    <label>Entrer votre salaire mensuel :</label>
+    <input type="number" id="salaireInput" placeholder="Ex: 263000">
+    <button onclick="enregistrerSalaire()">Enregistrer le salaire</button>
+    <p id="salaireAffiche"></p>
   </div>
 
-  <script src="./db.js"></script>
-  <script src="./app.js"></script>
+  <div class="card">
+    <h2>Ajouter une enveloppe</h2>
+    <label>Nom de l'enveloppe :</label>
+    <input type="text" id="nomEnveloppe" placeholder="Épargne, Loisirs...">
+    <label>Montant :</label>
+    <input type="number" id="montantEnveloppe" placeholder="Ex: 40000">
+    <button onclick="ajouterEnveloppe()">Ajouter</button>
+  </div>
+
+  <div class="card">
+    <h2>Répartition des enveloppes</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Enveloppe</th>
+          <th>Montant</th>
+        </tr>
+      </thead>
+      <tbody id="listeEnveloppes"></tbody>
+    </table>
+    <p id="totalEnveloppes"></p>
+    <p id="resteSalaire"></p>
+  </div>
+
+  <div class="card">
+    <h2>Projection annuelle</h2>
+    <p id="projection"></p>
+  </div>
+
   <script>
-    if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
+    let salaire = 0;
+    let enveloppes = [];
+
+    // Charger depuis LocalStorage
+    if(localStorage.getItem("salaire")) salaire = parseInt(localStorage.getItem("salaire"));
+    if(localStorage.getItem("enveloppes")) enveloppes = JSON.parse(localStorage.getItem("enveloppes"));
+
+    afficherSalaire();
+    afficherEnveloppes();
+
+    function enregistrerSalaire() {
+      const val = document.getElementById("salaireInput").value;
+      if(val && val > 0) {
+        salaire = parseInt(val);
+        localStorage.setItem("salaire", salaire);
+        afficherSalaire();
+        afficherEnveloppes();
+      } else {
+        alert("Veuillez entrer un salaire valide.");
+      }
+    }
+
+    function afficherSalaire() {
+      if(salaire > 0) {
+        document.getElementById("salaireAffiche").innerHTML = 
+          "💰 Salaire enregistré : " + salaire.toLocaleString() + " DZD";
+      }
+    }
+
+    function ajouterEnveloppe() {
+      const nom = document.getElementById("nomEnveloppe").value.trim();
+      const montant = parseInt(document.getElementById("montantEnveloppe").value);
+
+      if(nom && montant > 0) {
+        enveloppes.push({ nom, montant });
+        localStorage.setItem("enveloppes", JSON.stringify(enveloppes));
+        afficherEnveloppes();
+        document.getElementById("nomEnveloppe").value = "";
+        document.getElementById("montantEnveloppe").value = "";
+      } else {
+        alert("Veuillez entrer un nom et un montant valide.");
+      }
+    }
+
+    function afficherEnveloppes() {
+      const tbody = document.getElementById("listeEnveloppes");
+      tbody.innerHTML = "";
+      let total = 0;
+
+      enveloppes.forEach(env => {
+        total += env.montant;
+        tbody.innerHTML += `<tr><td>${env.nom}</td><td>${env.montant.toLocaleString()} DZD</td></tr>`;
+      });
+
+      document.getElementById("totalEnveloppes").innerHTML = "📊 Total enveloppes : " + total.toLocaleString() + " DZD";
+
+      if(salaire > 0) {
+        let reste = salaire - total;
+        document.getElementById("resteSalaire").innerHTML = reste >= 0
+          ? `<span class="success">✅ Reste disponible : ${reste.toLocaleString()} DZD</span>`
+          : `<span class="warning">⚠️ Dépassement de budget : ${reste.toLocaleString()} DZD</span>`;
+        
+        document.getElementById("projection").innerHTML = 
+          "Sur 12 mois, vous pouvez épargner environ : " + (reste * 12).toLocaleString() + " DZD";
+      }
     }
   </script>
 </body>
