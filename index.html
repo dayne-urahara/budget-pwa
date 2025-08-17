@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Budget & Épargne – auto-allocation</title>
+<title>Budget & Épargne – auto-allocation + priorités</title>
 <style>
   :root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--ring:#e5e7eb;--accent:#2563eb;--good:#16a34a;--bad:#ef4444}
   *{box-sizing:border-box}
@@ -29,13 +29,16 @@
   .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px}
   .success{color:var(--good);font-weight:600}
   .danger{background:var(--bad);color:#fff;border:none;padding:6px 8px;border-radius:8px;cursor:pointer}
+  .ghost{background:#0b1220;color:#fff;border:none;padding:6px 8px;border-radius:8px;cursor:pointer}
   .bar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
   .bar>i{display:block;height:100%;background:#22c55e;width:0%}
   .tag{padding:2px 8px;border-radius:999px;font-size:12px;background:#f1f5f9}
+  .prio{display:flex;gap:6px}
+  .prio button{padding:6px 8px;border-radius:8px}
 </style>
 </head>
 <body>
-<header><h1>Budget & Épargne – auto-allocation</h1></header>
+<header><h1>Budget & Épargne – auto-allocation + priorités</h1></header>
 <nav>
   <button id="btnBudget" class="active" onclick="showPage('budget')">💰 Budget</button>
   <button id="btnEpargne" onclick="showPage('epargne')">📊 Épargne & Projets</button>
@@ -59,7 +62,7 @@
       </div>
 
       <div class="card">
-        <h2>2) Enveloppes d’ÉPARGNE (création)</h2>
+        <h2>2) Enveloppes d’ÉPARGNE</h2>
         <div class="row">
           <input id="savNom" placeholder="Nom (Aménagement, Voyage, Sécurité, Or…)"/>
           <button class="btn" onclick="addSavEnv()">Créer enveloppe</button>
@@ -76,7 +79,7 @@
           <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
           <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
         </div>
-        <p class="muted">FIFO : les projets les plus anciens de l’enveloppe sont complétés en premier.</p>
+        <p class="muted">La répartition respecte **l’ordre de priorité** des projets de l’enveloppe (le premier en haut est servi d’abord).</p>
       </div>
 
       <div class="card">
@@ -96,12 +99,12 @@
       <div class="card">
         <h2>4) Dashboard</h2>
         <p class="muted"><span class="tag" id="nowMonth"></span></p>
-        <p>Total revenus (salaire + extras) : <strong id="dashRevenus">—</strong></p>
+        <p>Total revenus : <strong id="dashRevenus">—</strong></p>
         <p>Total dépenses budgétées : <strong id="dashDepBudg">—</strong></p>
-        <p>Épargne versée (toutes enveloppes) : <strong id="dashSavAlloue">—</strong></p>
-        <p>Reste indicatif (revenus − budgets dépenses − épargne versée) : <strong id="dashLeft">—</strong></p>
+        <p>Épargne versée : <strong id="dashSavAlloue">—</strong></p>
+        <p>Reste indicatif (revenus − budgets − épargne versée) : <strong id="dashLeft">—</strong></p>
         <div class="bar"><i id="barSpent"></i></div>
-        <p class="muted">La barre représente l’épargne versée en % des revenus.</p>
+        <p class="muted">Barre = épargne versée en % des revenus.</p>
       </div>
     </div>
   </div>
@@ -109,7 +112,7 @@
   <!-- PAGE ÉPARGNE & PROJETS -->
   <div id="epargne" class="page">
     <div class="card">
-      <h2>Projets (liés à une enveloppe d’épargne)</h2>
+      <h2>Projets par enveloppe (priorités haut/bas)</h2>
       <div class="row">
         <select id="projEnv"></select>
         <input id="projNom" placeholder="Nom du projet (ex: Meuble salle de bain)"/>
@@ -118,10 +121,10 @@
         <input id="projPrix" type="number" inputmode="decimal" placeholder="Objectif (DZD)"/>
         <button class="btn" onclick="addProjet()">Créer projet</button>
       </div>
-      <p class="muted">Chaque versement sur l’enveloppe choisie alimente automatiquement ses projets jusqu’à atteindre leurs objectifs (statut vert ✅).</p>
+      <p class="muted">Réorganise l’ordre des projets (⬆️⬇️) pour changer **la priorité de financement**. La progression passe en vert ✅ dès que l’objectif est atteint.</p>
 
       <table class="table">
-        <thead><tr><th>Projet</th><th>Enveloppe</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th></th></tr></thead>
+        <thead><tr><th>Projet</th><th>Enveloppe</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th>Priorité</th><th></th></tr></thead>
         <tbody id="projBody"></tbody>
       </table>
     </div>
@@ -141,8 +144,8 @@ let REVENUS_SUPP = Number(localStorage.getItem("REVENUS_SUPP")||0);
 let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");  // {id,name,totalIn}
 let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");   // {id,date,envId,amount}
 
-// Projets liés à enveloppes
-let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");     // {id,name,envId,target,saved,done}
+// Projets liés à enveloppes (avec priorité)
+let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");     // {id,name,envId,target,saved,done,priority}
 let PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");  // {id,date,projectId,amount,envId}
 
 // Dépenses budgétées (facultatif)
@@ -172,7 +175,7 @@ function sumDepBudgets(){ return DEP_ENV.reduce((s,c)=>s+Number(c.budget||0),0);
 function totalRevenus(){ return (Number(SALAIRE)||0) + (Number(REVENUS_SUPP)||0); }
 function totalSavAlloue(){ return SAV_ENV.reduce((s,e)=> s + Number(e.totalIn||0), 0); }
 
-/* ========= UI: Revenus ========= */
+/* ========= Revenus ========= */
 function saveSalaire(){
   const v = Number(($("salaireInput").value||0));
   if(!v){ alert("Salaire invalide."); return; }
@@ -186,7 +189,7 @@ function addRevenu(){
   persist(); renderAll();
 }
 
-/* ========= UI: Épargne – enveloppes ========= */
+/* ========= Épargne – enveloppes ========= */
 function addSavEnv(){
   const name = ($("savNom").value||"").trim();
   if(!name){ alert("Nom d’enveloppe requis."); return; }
@@ -204,20 +207,25 @@ function delSavEnv(id){
   persist(); renderAll();
 }
 
-/* — Versement + auto-répartition (FIFO) — */
+/* — Versement + auto-répartition selon priorité — */
 function verserEpargne(){
   if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("savSelect").value;
   const amount = Number(($("savVersement").value||0));
   if(!amount){ alert("Montant invalide."); return; }
+
   // log enveloppe
   SAV_TX.push({id:crypto.randomUUID(),date:new Date().toISOString().slice(0,10),envId,amount});
   const env = SAV_ENV.find(e=>e.id===envId);
   env.totalIn = Number(env.totalIn||0) + amount;
 
-  // auto-allocate aux projets non terminés, plus anciens d’abord
+  // auto-allocate aux projets non terminés triés par priority ASC
+  ensurePriorities(envId);
   let remain = amount;
-  const list = PROJ.filter(p=>p.envId===envId && !p.done);
+  const list = PROJ
+    .filter(p=>p.envId===envId && !p.done)
+    .sort((a,b)=> (a.priority??0) - (b.priority??0));
+
   for(const p of list){
     if(remain<=0) break;
     const need = Math.max(0, Number(p.target||0) - Number(p.saved||0));
@@ -232,24 +240,56 @@ function verserEpargne(){
   persist(); renderAll();
 }
 
-/* ========= UI: Projets ========= */
+/* ========= Projets (création + priorités) ========= */
+function getNextPriority(envId){
+  const ps = PROJ.filter(p=>p.envId===envId);
+  if(!ps.length) return 0;
+  return Math.max(...ps.map(p=> (p.priority??0))) + 1;
+}
+function ensurePriorities(envId){
+  const ps = PROJ.filter(p=>p.envId===envId);
+  // si certains n’ont pas de priority, on normalise en séquence 0..n-1 selon l’ordre actuel d’affichage
+  if (ps.some(p=>p.priority===undefined)){
+    ps.sort((a,b)=> (a.priority??Number.MAX_SAFE_INTEGER) - (b.priority??Number.MAX_SAFE_INTEGER));
+    ps.forEach((p,i)=> p.priority=i);
+  } else {
+    // aussi : compacter (éviter 0,2,5…)
+    ps.sort((a,b)=> (a.priority - b.priority));
+    ps.forEach((p,i)=> p.priority=i);
+  }
+}
 function addProjet(){
   if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("projEnv").value;
   const name = ($("projNom").value||"").trim();
   const target = Number(($("projPrix").value||0));
   if(!name || !target){ alert("Nom et objectif requis."); return; }
-  PROJ.push({id:crypto.randomUUID(),name,envId,target,saved:0,done:false});
+  const prio = getNextPriority(envId);
+  PROJ.push({id:crypto.randomUUID(),name,envId,target,saved:0,done:false,priority:prio});
   $("projNom").value=""; $("projPrix").value="";
   persist(); renderAll();
 }
 function delProjet(id){
+  const envId = PROJ.find(p=>p.id===id)?.envId;
   PROJ = PROJ.filter(p=>p.id!==id);
   PROJ_TX = PROJ_TX.filter(t=>t.projectId!==id);
+  if(envId) ensurePriorities(envId);
+  persist(); renderAll();
+}
+function moveProject(id, dir){ // dir = -1 (up) | +1 (down)
+  const p = PROJ.find(x=>x.id===id); if(!p) return;
+  ensurePriorities(p.envId);
+  const siblings = PROJ.filter(x=>x.envId===p.envId).sort((a,b)=>a.priority-b.priority);
+  const idx = siblings.findIndex(x=>x.id===id);
+  const swapIdx = idx + dir;
+  if (swapIdx<0 || swapIdx>=siblings.length) return; // rien à faire
+  // swap priorities
+  const a = siblings[idx], b = siblings[swapIdx];
+  const tmp = a.priority; a.priority = b.priority; b.priority = tmp;
   persist(); renderAll();
 }
 
-/* ========= UI: Dépenses budgétées (facultatif) ========= */
+/* ========= Dépenses budgétées (facultatif) ========= */
 function addDepenseEnv(){
   const name = ($("depNom").value||"").trim();
   const bud  = Number(($("depMontant").value||0));
@@ -301,7 +341,16 @@ function renderBudget(){
 
 function renderEpargne(){
   $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
-  $("projBody").innerHTML = PROJ.map(p=>{
+
+  // Pour un affichage clair : trier globalement par enveloppe puis par priority
+  const projSorted = PROJ.slice().sort((a,b)=>{
+    const ea = SAV_ENV.find(e=>e.id===a.envId)?.name || "";
+    const eb = SAV_ENV.find(e=>e.id===b.envId)?.name || "";
+    if (ea !== eb) return ea.localeCompare(eb);
+    return (a.priority??0) - (b.priority??0);
+  });
+
+  $("projBody").innerHTML = projSorted.map(p=>{
     const env = SAV_ENV.find(e=>e.id===p.envId);
     const pct = p.target ? Math.min(100, Math.round((Number(p.saved||0)/Number(p.target))*100)) : 0;
     const status = (p.done || p.saved>=p.target)
@@ -317,6 +366,13 @@ function renderEpargne(){
           <div class="bar"><i style="width:${pct}%"></i></div>
           <div class="muted">${pct}%</div>
         </td>
+        <td>
+          <div class="prio">
+            <button class="ghost" onclick="moveProject('${p.id}', -1)">⬆️ Haut</button>
+            <button class="ghost" onclick="moveProject('${p.id}', 1)">⬇️ Bas</button>
+          </div>
+          <div class="muted">rang: ${p.priority??0}</div>
+        </td>
         <td class="right"><button class="danger" onclick="delProjet('${p.id}')">Suppr.</button></td>
       </tr>
     `;
@@ -325,7 +381,11 @@ function renderEpargne(){
 
 function renderAll(){ renderBudget(); renderEpargne(); }
 
-// Boot
+// Boot : compat pour anciens projets (sans priority)
+(function initPriorities(){
+  const envIds = [...new Set(PROJ.map(p=>p.envId))];
+  envIds.forEach(ensurePriorities);
+})();
 renderAll();
 </script>
 </body>
