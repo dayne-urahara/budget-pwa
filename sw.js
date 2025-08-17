@@ -1,14 +1,9 @@
-// sw.js — Service Worker pour cache offline
-const CACHE = "budget-v3";
+// sw.js — Service Worker (v4) cache propre
+const CACHE = "budget-v4";
 const ASSETS = [
   "./",
   "./index.html",
-  "./manifest.webmanifest",
-  "./app.js",
-  "./db.js",
-  "./icons/icon-192.png",
-  "./icons/icon-512.png",
-  "./icons/apple-touch-icon.png"
+  "./manifest.webmanifest?v=4"
 ];
 
 self.addEventListener("install", (event) => {
@@ -28,13 +23,11 @@ self.addEventListener("fetch", (event) => {
     caches.match(event.request).then(
       (r) =>
         r ||
-        fetch(event.request)
-          .then((resp) => {
-            const clone = resp.clone();
-            caches.open(CACHE).then((c) => c.put(event.request, clone));
-            return resp;
-          })
-          .catch(() => caches.match("./"))
+        fetch(event.request).then((resp) => {
+          const clone = resp.clone();
+          caches.open(CACHE).then((c) => c.put(event.request, clone));
+          return resp;
+        }).catch(() => caches.match("./"))
     )
   );
 });
