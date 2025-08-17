@@ -1,5 +1,5 @@
 // sw.js — Service Worker pour cache offline
-const CACHE = "budget-v2"; // bump si tu modifies la liste
+const CACHE = "budget-v3";
 const ASSETS = [
   "./",
   "./index.html",
