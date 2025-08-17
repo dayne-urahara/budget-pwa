@@ -1,17 +1,18 @@
-// db.js — IndexedDB minimal avec migration depuis localStorage
+// db.js — IndexedDB minimal + migration localStorage -> IDB
 
 const DB_NAME = "budget-db";
-const DB_VER = 1;
-const STORE = { meta: "meta", cats: "cats", tx: "tx" };
+const DB_VER = 2; // v2: ajout du store "savings"
+const STORE = { meta: "meta", cats: "cats", tx: "tx", savings: "savings" };
 
 function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VER);
-    req.onupgradeneeded = (e) => {
+    req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE.meta)) db.createObjectStore(STORE.meta);
       if (!db.objectStoreNames.contains(STORE.cats)) db.createObjectStore(STORE.cats, { keyPath: "id" });
       if (!db.objectStoreNames.contains(STORE.tx)) db.createObjectStore(STORE.tx, { keyPath: "id", autoIncrement: true });
+      if (!db.objectStoreNames.contains(STORE.savings)) db.createObjectStore(STORE.savings, { keyPath: "id" });
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
