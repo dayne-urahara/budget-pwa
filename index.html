@@ -100,6 +100,8 @@
           <p>Total dépensé : <strong id="dashSpent">—</strong></p>
           <p>Épargne théorique (Salaire − Dépenses) : <strong id="dashSave">—</strong></p>
           <div class="bar"><i id="barSpent"></i></div>
+                    <div id="catBars"></div>
+
           <p class="muted">La barre montre le % dépensé vs salaire.</p>
           <div class="actions">
             <button id="exportBtn" class="ghost">Exporter JSON</button>
@@ -116,11 +118,14 @@
     </div>
   </div>
 
+  <script src="./db.js"></script>
   <script src="./app.js"></script>
   <script>
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js"));
     }
+  </script>
+
   </script>
 </body>
 </html>
