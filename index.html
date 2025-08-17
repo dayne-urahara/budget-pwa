@@ -3,22 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Budget – PWA (Reset SW + App)</title>
+  <title>Budget – PWA (Revenus, Projection, Boussole & Épargnes)</title>
 
   <!-- PWA -->
-  <link rel="manifest" href="./manifest.webmanifest?v=4" />
+  <link rel="manifest" href="./manifest.webmanifest?v=5" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 
   <style>
-    :root { --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --accent:#2563eb; --good:#16a34a; --warn:#f59e0b; --bad:#ef4444; }
+    :root { --bg:#f6f7fb; --card:#fff; --ink:#0f172a; --muted:#667085; --ring:#e5e7eb; --accent:#2563eb; --good:#16a34a; --warn:#f59e0b; --bad:#ef4444; --bar:#22c55e; --bar2:#3b82f6; }
     *{ box-sizing:border-box }
     body{ margin:0; font-family: system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink); background:var(--bg) }
-    .wrap{ max-width:1100px; margin:0 auto; padding:16px }
+    .wrap{ max-width:1200px; margin:0 auto; padding:16px }
+    .topnav{ position:sticky; top:0; background:rgba(246,247,251,.8); backdrop-filter:saturate(180%) blur(8px); border-bottom:1px solid var(--ring); display:flex; gap:8px; padding:10px 16px; z-index:9 }
+    .tab{ padding:10px 14px; border-radius:999px; border:1px solid var(--ring); background:#fff; cursor:pointer; }
+    .tab.active{ background:var(--accent); color:#fff; border-color:var(--accent) }
     .grid{ display:grid; grid-template-columns:1fr; gap:12px }
-    @media(min-width:1000px){ .grid{ grid-template-columns:1.2fr .8fr } }
+    @media(min-width:1100px){ .grid{ grid-template-columns:1.25fr .75fr } }
     .card{ background:var(--card); border:1px solid var(--ring); border-radius:16px; padding:16px; box-shadow:0 2px 10px rgba(0,0,0,.04) }
-    h1{ margin:8px 0 12px 0 } h2{ margin:0 0 10px 0; font-size:18px }
+    h1{ margin:8px 0 12px } h2{ margin:0 0 10px; font-size:18px }
     input,select,button{ width:100%; padding:10px; border-radius:10px; border:1px solid var(--ring); font-size:16px; background:#fff }
     button{ border:none; background:var(--accent); color:#fff; cursor:pointer }
     .row{ display:flex; gap:8px; flex-wrap:wrap } .row>*{ flex:1 }
@@ -27,332 +30,276 @@
     .table{ width:100%; border-collapse: collapse } .table th,.table td{ padding:8px; border-bottom:1px dashed #e5e7eb; text-align:left; vertical-align:top }
     .right{ text-align:right }
     .bar{ height:8px; background:#e5e7eb; border-radius:999px; overflow:hidden }
-    .bar>i{ display:block; height:100%; background:#22c55e; width:0% }
+    .bar>i{ display:block; height:100%; background:var(--bar); width:0% }
+    .bar.blue>i{ background:var(--bar2) }
     .good{ color:var(--good) } .warn{ color:var(--warn) } .bad{ color:var(--bad) }
+    .hint{ padding:10px; border-radius:12px; background:#f8fafc; border:1px dashed #e2e8f0; font-size:14px }
+    .actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center }
+    .danger{ background:var(--bad) }
+    .ghost{ background:#111827; color:#fff }
+    .hide{ display:none !important }
+    .goal-ok{ color:#fff; background:var(--good); padding:2px 8px; border-radius:999px; font-size:12px }
+    .goal-warn{ color:#fff; background:var(--warn); padding:2px 8px; border-radius:999px; font-size:12px }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <h1>Budget (PWA) – Reset & App</h1>
-    <p class="muted">Si tu venais d’une version précédente, cette page **désinstalle d’abord l’ancien Service Worker et vide son cache**, puis recharge une seule fois. Ensuite, elle installe le nouveau SW (v4).</p>
-
-    <div class="grid">
-      <!-- Colonne gauche -->
-      <div class="grid-col">
-        <div class="card">
-          <h2>1) Salaire mensuel</h2>
-          <div class="row">
-            <input id="salary" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)" />
-            <button id="saveSalary">Enregistrer</button>
-          </div>
-          <p class="muted">Valeur actuelle : <strong id="currentSalary">—</strong></p>
-        </div>
-
-        <div class="card">
-          <h2>2) Enveloppes de dépenses</h2>
-          <div class="row">
-            <input id="catName" placeholder="Nom (ex: Courses, Véhicule, Scolaire)" />
-            <input id="catBudget" type="number" inputmode="decimal" placeholder="Budget (DZD)" />
-            <button id="addCat">Ajouter</button>
-          </div>
-          <table class="table">
-            <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
-            <tbody id="catsBody"></tbody>
-          </table>
-          <p><span class="pill">Total catégories : <span id="catsTotal">0</span> DZD</span></p>
-        </div>
-
-        <div class="card">
-          <h2>3) Dépenses</h2>
-          <div class="row">
-            <select id="txCat"></select>
-            <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
-          </div>
-          <div class="row">
-            <input id="txNote" placeholder="Note (facultatif)" />
-            <input id="txDate" type="date" />
-          </div>
-          <div class="row">
-            <button id="addTx">Ajouter dépense</button>
-            <button id="clearTx" class="bad">Vider l'historique</button>
-          </div>
-          <table class="table">
-            <thead><tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr></thead>
-            <tbody id="txBody"></tbody>
-          </table>
-        </div>
-
-        <div class="card">
-          <h2>4) Épargne (enveloppes)</h2>
-          <div class="row">
-            <input id="savName" placeholder="Nom (Épargne, Loisir, Aménagement…)" />
-            <input id="savAmount" type="number" inputmode="decimal" placeholder="Montant alloué (DZD)" />
-            <button id="addSav">Allouer</button>
-          </div>
-          <table class="table">
-            <thead><tr><th>Enveloppe</th><th class="right">Montant</th><th></th></tr></thead>
-            <tbody id="savBody"></tbody>
-          </table>
-          <p><span class="pill">Total épargne allouée : <span id="savTotal">0</span> DZD</span></p>
-        </div>
-      </div>
-
-      <!-- Colonne droite -->
-      <div class="grid-col">
-        <div class="card">
-          <h2>Dashboard</h2>
-          <p>Salaire : <strong id="dashSalary">—</strong></p>
-          <p>Total budgets (dépenses) : <strong id="dashCats">—</strong></p>
-          <p>Total dépensé (mois courant) : <strong id="dashSpent">—</strong></p>
-          <p>Épargne théorique (Salaire − Dépenses) : <strong id="dashSave">—</strong></p>
-          <p>Épargne allouée (enveloppes) : <strong id="dashSavings">—</strong></p>
-          <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
-          <div class="bar"><i id="barSpent"></i></div>
-          <p class="muted">La barre montre le % dépensé vs salaire (mois en cours).</p>
-        </div>
-
-        <div class="card">
-          <h2>Projection annuelle (simple)</h2>
-          <div class="row">
-            <select id="yearSelect"></select>
-            <button id="refreshYear">Actualiser</button>
-          </div>
-          <div id="yearTableWrap"></div>
-        </div>
-
-        <div class="card">
-          <h2>Export / Import</h2>
-          <div class="row">
-            <button id="exportBtn">Exporter JSON</button>
-            <input id="importFile" type="file" accept="application/json" />
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="topnav">
+    <button class="tab active" id="tabBudget">Budget</button>
+    <button class="tab" id="tabSavings">Épargnes</button>
   </div>
 
-  <!-- Script de RECOVERY SW + App inline (évite les soucis de fichiers externes) -->
+  <div class="wrap">
+    <h1>Budget (PWA) — Revenus, Projection & Boussole</h1>
+    <p class="muted">Ajoute cette app à l’écran d’accueil (Safari → Partager → “Ajouter à l’écran d’accueil”). Les données sont stockées en local.</p>
+
+    <!-- PAGE BUDGET -->
+    <section id="pageBudget">
+      <div class="grid">
+        <!-- Colonne gauche -->
+        <div class="grid-col">
+
+          <div class="card">
+            <h2>1) Salaire de base</h2>
+            <div class="row">
+              <input id="salary" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)" />
+              <button id="saveSalary">Enregistrer</button>
+            </div>
+            <p class="muted">Salaire actuel : <strong id="currentSalary">—</strong></p>
+          </div>
+
+          <div class="card">
+            <h2>2) Autres rentrées d’argent (mois en cours)</h2>
+            <div class="row">
+              <input id="incAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
+              <input id="incDate" type="date" />
+            </div>
+            <div class="row">
+              <input id="incNote" placeholder="Note (ex: freelance, prime, remboursement…)" />
+              <button id="addIncome">Ajouter rentrée</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Date</th><th>Note</th><th class="right">Montant</th><th></th></tr></thead>
+              <tbody id="incBody"></tbody>
+            </table>
+            <p><span class="pill">Total autres revenus (mois) : <span id="incTotal">0</span> DZD</span></p>
+          </div>
+
+          <div class="card">
+            <h2>3) Enveloppes de dépenses</h2>
+            <div class="row">
+              <input id="catName" placeholder="Nom (ex: Courses, Véhicule, Scolaire)" />
+              <input id="catBudget" type="number" inputmode="decimal" placeholder="Budget (DZD)" />
+              <button id="addCat">Ajouter</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
+              <tbody id="catsBody"></tbody>
+            </table>
+            <p><span class="pill">Total catégories : <span id="catsTotal">0</span> DZD</span></p>
+          </div>
+
+          <div class="card">
+            <h2>4) Dépenses</h2>
+            <div class="row">
+              <select id="txCat"></select>
+              <input id="txAmount" type="number" inputmode="decimal" placeholder="Montant (DZD)" />
+            </div>
+            <div class="row">
+              <input id="txNote" placeholder="Note (facultatif)" />
+              <input id="txDate" type="date" />
+            </div>
+            <div class="row">
+              <button id="addTx">Ajouter dépense</button>
+              <button id="clearTx" class="danger">Vider l'historique</button>
+            </div>
+            <table class="table">
+              <thead><tr><th>Date</th><th>Catégorie</th><th>Note</th><th class="right">Montant</th></tr></thead>
+              <tbody id="txBody"></tbody>
+            </table>
+          </div>
+
+        </div>
+
+        <!-- Colonne droite -->
+        <div class="grid-col">
+          <div class="card">
+            <h2>Dashboard & Boussole</h2>
+            <p class="muted" id="nowMonthTag"></p>
+            <p>Revenu du mois (salaire + autres) : <strong id="dashIncome">—</strong></p>
+            <p>Salaire de base : <strong id="dashSalary">—</strong></p>
+            <p>Autres revenus (mois) : <strong id="dashIncOther">—</strong></p>
+            <p>Total budgets (dépenses) : <strong id="dashCats">—</strong></p>
+            <p>Total dépensé (mois) : <strong id="dashSpent">—</strong></p>
+            <p>Épargne théorique (Revenu − Dépenses) : <strong id="dashSave">—</strong></p>
+            <p>Épargne allouée (soldes épargnes) : <strong id="dashSavings">—</strong></p>
+            <p>Reste à allouer : <strong id="dashLeft">—</strong></p>
+            <div class="bar"><i id="barSpent"></i></div>
+            <p class="muted">% dépensé vs revenu du mois.</p>
+            <div class="hint" id="compassBox">Conseils dynamiques…</div>
+          </div>
+
+          <div class="card">
+            <h2>Projection annuelle</h2>
+            <div class="row">
+              <select id="yearSelect"></select>
+              <button id="refreshYear">Actualiser</button>
+            </div>
+            <div id="yearTableWrap"></div>
+          </div>
+
+          <div class="card">
+            <h2>Export / Import</h2>
+            <div class="actions">
+              <button id="exportBtn" class="ghost">Exporter JSON</button>
+              <input id="importFile" type="file" accept="application/json" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PAGE EPARGNES -->
+    <section id="pageSavings" class="hide">
+      <div class="card">
+        <h2>Épargnes — objectifs & contributions</h2>
+        <div class="row">
+          <input id="svName" placeholder="Nom (ex: Meuble salle de bain)" />
+          <input id="svTarget" type="number" inputmode="decimal" placeholder="Objectif (DZD)" />
+          <button id="svCreate">Créer / Mettre à jour objectif</button>
+        </div>
+        <div class="row">
+          <select id="svSelect"></select>
+          <input id="svContrib" type="number" inputmode="decimal" placeholder="Contribution (DZD)" />
+          <button id="svAdd">Ajouter contribution</button>
+        </div>
+
+        <table class="table">
+          <thead><tr><th>Épargne</th><th class="right">Solde</th><th class="right">Objectif</th><th>Progression</th><th></th></tr></thead>
+          <tbody id="svBody"></tbody>
+        </table>
+        <p><span class="pill">Total épargne allouée : <span id="svTotal">0</span> DZD</span></p>
+        <p class="muted">Quand le solde atteint l’objectif, le badge devient <strong class="good">VERT</strong>.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- SW Recovery + App -->
   <script>
-  (async function recoverAndRegisterSW(){
+  (async function recoverSW(){
     if (!('serviceWorker' in navigator)) return;
-    const flag = sessionStorage.getItem('sw_recovered_v4');
+    const flag = sessionStorage.getItem('sw_ok_v5');
     if (!flag) {
       try {
         const regs = await navigator.serviceWorker.getRegistrations();
-        for (const r of regs) { await r.unregister(); }
-        if (window.caches) {
-          const keys = await caches.keys();
-          for (const k of keys) { await caches.delete(k); }
-        }
-      } catch(e) { /* ignore */ }
-      sessionStorage.setItem('sw_recovered_v4','1');
-      location.replace(location.href.split('#')[0]); // reload propre
-      return; // stop ici, on rechargera
+        for (const r of regs) await r.unregister();
+        if (window.caches) { for (const k of await caches.keys()) await caches.delete(k); }
+      } catch(e) {}
+      sessionStorage.setItem('sw_ok_v5','1');
+      location.replace(location.href.split('#')[0]);
+      return;
     } else {
-      // On est déjà revenu après nettoyage -> on enregistre le nouveau SW
-      navigator.serviceWorker.register('./sw.js?v=4').catch(()=>{});
+      navigator.serviceWorker.register('./sw.js?v=5').catch(()=>{});
     }
   })();
   </script>
 
   <script>
-  // ------- APP (LocalStorage – simple & fiable) -------
+  // ======== STATE & HELPERS (LocalStorage) ========
   const $ = (id)=>document.getElementById(id);
   const fmt = (n)=> new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0)) + " DZD";
   const just= (n)=> new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
   const today=()=> new Date().toISOString().slice(0,10);
-  const ymNow = ()=> new Date().toISOString().slice(0,7);
+  const ym   = (d)=> (d||new Date()).toISOString().slice(0,7);
+  const ymNow= ()=> ym();
 
-  // State
-  let salary = Number(localStorage.getItem("salary")||0);
-  let cats   = JSON.parse(localStorage.getItem("cats")||"[]"); // {id,name,budget}
-  let tx     = JSON.parse(localStorage.getItem("tx")||"[]");   // {id,date,catId,amount,note}
-  let sav    = JSON.parse(localStorage.getItem("savings")||"[]"); // {id,name,amount}
+  let baseSalary = Number(localStorage.getItem("salary")||0);
+  let cats = JSON.parse(localStorage.getItem("cats")||"[]"); // {id,name,budget}
+  let tx   = JSON.parse(localStorage.getItem("tx")||"[]");   // {id,date,catId,amount,note}
+  let incomes = JSON.parse(localStorage.getItem("incomes")||"[]"); // {id,date,amount,note}
+  let savings = JSON.parse(localStorage.getItem("savings")||"[]"); // {id,name,balance,target}
 
-  // DOM refs
-  const salaryInput=$("salary"), saveSalary=$("saveSalary"), currentSalary=$("currentSalary");
-  const catName=$("catName"), catBudget=$("catBudget"), addCat=$("addCat"), catsBody=$("catsBody"), catsTotal=$("catsTotal");
-  const txCat=$("txCat"), txAmount=$("txAmount"), txNote=$("txNote"), txDate=$("txDate"), addTx=$("addTx"), clearTx=$("clearTx"), txBody=$("txBody");
-  const savName=$("savName"), savAmount=$("savAmount"), addSav=$("addSav"), savBody=$("savBody"), savTotal=$("savTotal");
-  const dashSalary=$("dashSalary"), dashCats=$("dashCats"), dashSpent=$("dashSpent"), dashSave=$("dashSave"), dashSavings=$("dashSavings"), dashLeft=$("dashLeft"), barSpent=$("barSpent");
+  function saveAll(){
+    localStorage.setItem("salary", baseSalary);
+    localStorage.setItem("cats", JSON.stringify(cats));
+    localStorage.setItem("tx", JSON.stringify(tx));
+    localStorage.setItem("incomes", JSON.stringify(incomes));
+    localStorage.setItem("savings", JSON.stringify(savings));
+  }
+
+  // ======== CALCULS ========
+  function incomeOtherTotal(ymStr){
+    return incomes.filter(i => (i.date||"").slice(0,7)===ymStr)
+                  .reduce((s,i)=> s + Number(i.amount||0), 0);
+  }
+  function incomeMonth(ymStr){
+    return (Number(baseSalary)||0) + incomeOtherTotal(ymStr);
+  }
+  function spentMonth(ymStr){
+    return tx.filter(t => (t.date||"").slice(0,7)===ymStr)
+             .reduce((s,t)=> s + Number(t.amount||0), 0);
+  }
+  function budgetsTotal(){
+    return cats.reduce((s,c)=> s + Number(c.budget||0), 0);
+  }
+  function savingsTotal(){
+    return savings.reduce((s,g)=> s + Number(g.balance||0), 0);
+  }
+  function theoreticalSave(ymStr){
+    return Math.max(0, incomeMonth(ymStr) - spentMonth(ymStr));
+  }
+  function leftToAllocate(ymStr){
+    return Math.max(0, theoreticalSave(ymStr) - savingsTotal());
+  }
+
+  // ======== RENDU — BUDGET PAGE ========
+  const nowTag = $("nowMonthTag");
+  const salaryInput=$("salary"), currentSalary=$("currentSalary");
+  const incAmount=$("incAmount"), incDate=$("incDate"), incNote=$("incNote"), incBody=$("incBody"), incTotal=$("incTotal");
+  const catName=$("catName"), catBudget=$("catBudget"), catsBody=$("catsBody"), catsTotal=$("catsTotal"), txCat=$("txCat");
+  const txAmount=$("txAmount"), txNote=$("txNote"), txDate=$("txDate"), txBody=$("txBody");
+  const dashIncome=$("dashIncome"), dashSalary=$("dashSalary"), dashIncOther=$("dashIncOther"), dashCats=$("dashCats"), dashSpent=$("dashSpent"), dashSave=$("dashSave"), dashSavings=$("dashSavings"), dashLeft=$("dashLeft"), barSpent=$("barSpent");
   const exportBtn=$("exportBtn"), importFile=$("importFile");
-  const yearSelect=$("yearSelect"), refreshYear=$("refreshYear"), yearTableWrap=$("yearTableWrap");
 
   txDate.value = today();
-
-  function saveLS(){ localStorage.setItem("salary",salary);
-    localStorage.setItem("cats",JSON.stringify(cats));
-    localStorage.setItem("tx",JSON.stringify(tx));
-    localStorage.setItem("savings",JSON.stringify(sav));
-  }
-
-  function computeSpentMonth(ym){
-    return tx.filter(t => (t.date||"").slice(0,7)===ym).reduce((s,t)=> s+Number(t.amount||0), 0);
-  }
-  function spentByCatMonth(ym){
-    const m={}; for(const t of tx){ if((t.date||"").slice(0,7)!==ym) continue; m[t.catId]=(m[t.catId]||0)+Number(t.amount||0); } return m;
-  }
-  function sumBudgets(){ return cats.reduce((s,c)=> s+Number(c.budget||0), 0); }
-  function totalSavings(){ return sav.reduce((s,g)=> s+Number(g.amount||0), 0); }
-  function theoreticalSave(ym){ return Math.max(0, (Number(salary)||0) - computeSpentMonth(ym)); }
-  function leftToAllocate(ym){ return Math.max(0, theoreticalSave(ym) - totalSavings()); }
+  incDate.value = today();
+  nowTag.textContent = new Date().toLocaleString("fr-DZ", { month:"long", year:"numeric" });
 
   function renderSalary(){
-    currentSalary.textContent = salary ? fmt(salary) : "—";
-    salaryInput.value = salary || "";
-    dashSalary.textContent = salary ? fmt(salary) : "—";
+    currentSalary.textContent = baseSalary ? fmt(baseSalary) : "—";
+    salaryInput.value = baseSalary || "";
   }
+
+  function renderIncomes(){
+    const ymC = ymNow();
+    const list = incomes.filter(i => (i.date||"").slice(0,7)===ymC).slice().reverse();
+    incBody.innerHTML = list.map(i => `
+      <tr>
+        <td>${i.date||"—"}</td>
+        <td>${i.note||""}</td>
+        <td class="right">${fmt(i.amount)}</td>
+        <td class="right"><button data-del-inc="${i.id}" class="danger" style="padding:6px 8px;border:none;border-radius:8px">Suppr.</button></td>
+      </tr>
+    `).join("");
+    incTotal.textContent = just(incomeOtherTotal(ymC));
+  }
+
   function renderCats(){
-    const sb = spentByCatMonth(ymNow());
-    let tot=0;
-    catsBody.innerHTML = cats.map(c=>{
-      tot += Number(c.budget||0);
-      return `<tr>
+    catsBody.innerHTML = cats.map(c => `
+      <tr>
         <td>${c.name}</td>
         <td class="right">${fmt(c.budget||0)}</td>
-        <td class="right"><button data-del="${c.id}" style="background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:8px">Suppr.</button></td>
-      </tr>`;
-    }).join("");
-    catsTotal.textContent = just(tot);
-    dashCats.textContent = fmt(tot);
-    txCat.innerHTML = cats.map(c=>`<option value="${c.id}">${c.name}</option>`).join("");
+        <td class="right"><button data-del-cat="${c.id}" class="danger" style="padding:6px 8px;border:none;border-radius:8px">Suppr.</button></td>
+      </tr>
+    `).join("");
+    catsTotal.textContent = just(budgetsTotal());
+    txCat.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
   }
+
   function renderTx(){
-    txBody.innerHTML = tx.slice().reverse().map(t=>{
-      const c = cats.find(x=>x.id===t.catId);
+    const ymC = ymNow();
+    txBody.innerHTML = tx.slice().reverse().map(t => {
+      const c = cats.find(x => x.id===t.catId);
       return `<tr><td>${t.date||"—"}</td><td>${c?c.name:"—"}</td><td>${t.note||""}</td><td class="right">${fmt(t.amount)}</td></tr>`;
     }).join("");
-    const spent = computeSpentMonth(ymNow());
-    const theo  = theoreticalSave(ymNow());
-    dashSpent.textContent = fmt(spent);
-    dashSave.textContent  = fmt(theo);
-    dashSavings.textContent = fmt(totalSavings());
-    dashLeft.textContent = fmt(leftToAllocate(ymNow()));
-    const ratio = salary ? Math.min(100, Math.round((spent / salary) * 100)) : 0;
-    barSpent.style.width = ratio + "%";
-  }
-  function renderSav(){
-    savBody.innerHTML = sav.map(s=>`
-      <tr>
-        <td>${s.name}</td>
-        <td class="right">${fmt(s.amount||0)}</td>
-        <td class="right"><button data-del-s="${s.id}" style="background:#ef4444;color:#fff;border:none;padding:6px 8px;border-radius:8px">Suppr.</button></td>
-      </tr>`).join("");
-    savTotal.textContent = just(totalSavings());
-  }
-
-  function renderYearSelect(){
-    const years=new Set([String(new Date().getFullYear())]);
-    for(const t of tx){ if(t.date) years.add(t.date.slice(0,4)); }
-    const arr=[...years].sort();
-    yearSelect.innerHTML = arr.map(y=>`<option value="${y}" ${y===String(new Date().getFullYear())?"selected":""}>${y}</option>`).join("");
-  }
-  function renderYearTable(y){
-    const months=["01","02","03","04","05","06","07","08","09","10","11","12"];
-    let rows="", sumSpent=0, sumTheo=0, sumSav=0;
-    for(const m of months){
-      const ym = `${y}-${m}`;
-      const spent=computeSpentMonth(ym);
-      const theo =theoreticalSave(ym);
-      const savA =totalSavings(); // modèle simple
-      sumSpent+=spent; sumTheo+=theo; sumSav+=savA;
-      rows+=`<tr><td>${ym}</td><td class="right">${fmt(spent)}</td><td class="right">${fmt(theo)}</td><td class="right">${fmt(savA)}</td></tr>`;
-    }
-    yearTableWrap.innerHTML = `
-      <table class="table">
-        <thead><tr><th>Mois</th><th class="right">Dépensé</th><th class="right">Épargne théorique</th><th class="right">Épargne allouée</th></tr></thead>
-        <tbody>${rows}</tbody>
-        <tfoot><tr><th>Total ${y}</th><th class="right">${fmt(sumSpent)}</th><th class="right">${fmt(sumTheo)}</th><th class="right">${fmt(sumSav)}</th></tr></tfoot>
-      </table>
-    `;
-  }
-
-  // Events
-  $("saveSalary").addEventListener("click", ()=>{
-    const v = Number(($("salary").value||0));
-    if(!v) return alert("Entre un salaire valide.");
-    if(sumBudgets()>v && !confirm("Tes budgets de catégories dépassent ce salaire. Continuer ?")) return;
-    salary=v; saveLS(); renderSalary(); renderTx();
-  });
-
-  $("addCat").addEventListener("click", ()=>{
-    const name = (catName.value||"").trim();
-    const bud  = Number(catBudget.value||0);
-    if(!name || !bud) return alert("Nom et budget obligatoires.");
-    const id = crypto.randomUUID();
-    if (salary && (sumBudgets()+bud)>salary) return alert("La somme des budgets dépasse le salaire.");
-    cats.push({id,name,budget:bud}); saveLS(); catName.value=""; catBudget.value=""; renderCats(); renderTx();
-  });
-
-  $("catsBody").addEventListener("click",(e)=>{
-    const b=e.target.closest("button[data-del]"); if(!b) return;
-    const id=b.getAttribute("data-del");
-    if(!confirm("Supprimer cette catégorie (et ses dépenses) ?")) return;
-    tx = tx.filter(t=>t.catId!==id);
-    cats = cats.filter(c=>c.id!==id);
-    saveLS(); renderCats(); renderTx();
-  });
-
-  $("addTx").addEventListener("click", ()=>{
-    if(!cats.length) return alert("Crée d'abord une catégorie.");
-    const catId=txCat.value;
-    const amount=Number(txAmount.value||0);
-    if(!amount || amount<=0) return alert("Montant invalide.");
-    tx.push({id:crypto.randomUUID(),date:txDate.value||today(),catId,amount,note:(txNote.value||"").trim()});
-    saveLS(); txAmount.value=""; txNote.value=""; renderCats(); renderTx();
-  });
-
-  $("clearTx").addEventListener("click", ()=>{
-    if(!confirm("Supprimer tout l'historique des dépenses ?")) return;
-    tx=[]; saveLS(); renderCats(); renderTx();
-  });
-
-  $("addSav").addEventListener("click", ()=>{
-    const name=(savName.value||"").trim();
-    const amount=Number(savAmount.value||0);
-    if(!name || !amount) return alert("Nom et montant obligatoires.");
-    const left = leftToAllocate(ymNow());
-    if (amount>left) return alert("Montant supérieur au reste à allouer du mois.");
-    const existing = sav.find(s=>s.name.toLowerCase()===name.toLowerCase());
-    if (existing){ existing.amount = amount; }
-    else { sav.push({id:crypto.randomUUID(),name,amount}); }
-    saveLS(); savName.value=""; savAmount.value=""; renderSav(); renderTx();
-  });
-
-  $("savBody").addEventListener("click",(e)=>{
-    const b=e.target.closest("button[data-del-s]"); if(!b) return;
-    const id=b.getAttribute("data-del-s");
-    if(!confirm("Supprimer cette enveloppe d’épargne ?")) return;
-    sav = sav.filter(s=>s.id!==id); saveLS(); renderSav(); renderTx();
-  });
-
-  $("exportBtn").addEventListener("click", ()=>{
-    const data = { salary, cats, tx, savings:sav };
-    const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-    const url = URL.createObjectURL(blob);
-    const a=document.createElement("a"); a.href=url; a.download="budget-data.json"; a.click();
-    URL.revokeObjectURL(url);
-  });
-
-  $("importFile").addEventListener("change", async (e)=>{
-    const f=e.target.files?.[0]; if(!f) return;
-    try{
-      const text=await f.text(); const data=JSON.parse(text);
-      salary=Number(data.salary||0);
-      cats=Array.isArray(data.cats)?data.cats:[]; 
-      tx=Array.isArray(data.tx)?data.tx:[];
-      sav=Array.isArray(data.savings)?data.savings:[];
-      saveLS(); renderAll();
-      alert("Import OK.");
-    }catch{ alert("Fichier invalide."); }
-  });
-
-  $("refreshYear").addEventListener("click", ()=> renderYearTable(yearSelect.value||String(new Date().getFullYear())));
-
-  function renderAll(){
-    renderSalary(); renderCats(); renderTx(); renderSav(); renderYearSelect(); renderYearTable(String(new Date().getFullYear()));
-  }
-  renderAll();
-  </script>
-</body>
-</html>
+    const inc = incomeMonth(ymC), spent = spentMonth(ymC), theo = theoreticalSave(ymC), left = leftToAllocate(ymC);
+    dashIncome.text
