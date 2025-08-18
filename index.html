@@ -3,57 +3,77 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Budget & Épargne – drag & drop + projection</title>
+<title>Budget & Épargne — chiffrage + boussole</title>
 <style>
-  :root{--bg:#f6f7fb;--card:#fff;--ink:#0f172a;--muted:#667085;--ring:#e5e7eb;--accent:#2563eb;--good:#16a34a;--bad:#ef4444;--warn:#f59e0b}
+  :root{
+    --bg:#0b1020; --card:#0f162e; --ink:#e6e9f5; --muted:#a6b0cf; --ring:#24304f; --accent:#6ea8fe;
+    --good:#22c55e; --bad:#ef4444; --warn:#f59e0b; --chip:#1b2441; --chip2:#10172a;
+  }
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-  header{background:#111827;color:#fff;padding:16px}
-  header h1{margin:0;font-size:20px}
-  nav{display:flex;background:#1f2937}
-  nav button{flex:1;padding:12px 10px;border:none;background:#1f2937;color:#fff;cursor:pointer;font-size:16px}
-  nav button.active{background:#0b1220;font-weight:600}
-  .wrap{max-width:1200px;margin:0 auto;padding:16px}
-  .page{display:none}.page.active{display:block}
-  .grid{display:grid;grid-template-columns:1fr;gap:12px}
-  @media(min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
-  .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+  html,body{height:100%}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0a0f1f,#0f1326);color:var(--ink)}
+  header{position:sticky;top:0;z-index:20;background:rgba(10,15,31,.85);backdrop-filter:saturate(130%) blur(6px);border-bottom:1px solid #1a2240}
+  .topbar{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px}
+  .logo{font-weight:700;letter-spacing:.3px}
+  .tabs{display:flex;gap:8px;margin-left:auto}
+  .tab{padding:10px 14px;border:1px solid var(--ring);border-radius:12px;background:var(--chip);color:var(--ink);cursor:pointer}
+  .tab.active{background:var(--accent);color:#0b1020;border-color:transparent;font-weight:700}
+  .wrap{max-width:1280px;margin:0 auto;padding:16px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 16px}
+  @media (max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr)} }
+  .kpi{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:14px}
+  .kpi h4{margin:0 0 6px 0;font-size:13px;color:var(--muted);font-weight:600;letter-spacing:.3px}
+  .kpi .v{font-size:20px;font-weight:800}
+  .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+  @media (max-width:1000px){ .grid{grid-template-columns:1fr} }
+  .card{background:var(--card);border:1px solid var(--ring);border-radius:16px;padding:16px}
   h2{margin:0 0 10px 0;font-size:18px}
   h3{margin:10px 0 8px 0;font-size:16px}
-  input,select,button{width:100%;padding:10px;border-radius:10px;border:1px solid var(--ring);font-size:16px;background:#fff}
-  button.btn{border:none;background:var(--accent);color:#fff;cursor:pointer}
+  input,select,button{width:100%;padding:11px;border-radius:12px;border:1px solid var(--ring);font-size:15px;background:var(--chip2);color:var(--ink)}
+  button.btn{border:none;background:var(--accent);color:#0b1020;font-weight:700;cursor:pointer}
   .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
   .muted{color:var(--muted);font-size:14px}
   .table{width:100%;border-collapse:collapse;margin-top:10px}
-  .table th,.table td{border-bottom:1px dashed #e5e7eb;padding:8px;text-align:left;vertical-align:top}
+  .table th,.table td{border-bottom:1px dashed #253154;padding:10px;text-align:left;vertical-align:top}
+  .table thead th{color:var(--muted);font-size:13px}
   .right{text-align:right}
-  .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef2ff;color:#4338ca;font-size:12px}
-  .success{color:var(--good);font-weight:600}
-  .danger{background:var(--bad);color:#fff;border:none;padding:6px 8px;border-radius:8px;cursor:pointer}
-  .ghost{background:#0b1220;color:#fff;border:none;padding:6px 8px;border-radius:8px;cursor:pointer}
-  .bar{height:8px;background:#e5e7eb;border-radius:999px;overflow:hidden}
-  .bar>i{display:block;height:100%;background:#22c55e;width:0%}
-  .tag{padding:2px 8px;border-radius:999px;font-size:12px;background:#f1f5f9}
-  .prio{display:flex;gap:6px}
-  .prio button{padding:6px 8px;border-radius:8px}
-  /* Drag & Drop styles */
-  tbody.dropzone{border:2px dashed #cbd5e1;border-radius:12px}
+  .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#10244a;color:#9ec1ff;font-size:12px;border:1px solid #22407c}
+  .success{color:var(--good);font-weight:700}
+  .danger{background:var(--bad);color:#fff;border:none;padding:7px 10px;border-radius:10px;cursor:pointer}
+  .ghost{background:#182241;color:#e6e9f5;border:1px solid #2a3b6f;padding:6px 8px;border-radius:10px;cursor:pointer}
+  .bar{height:8px;background:#1b2441;border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#5eead4,#60a5fa);width:0%}
+  .hint{padding:10px;border-radius:12px;background:#0e1a38;border:1px dashed #223464;font-size:14px;color:#c5d2fb}
+  .page{display:none}.page.active{display:block}
+  .envHeader{background:#0e1a38;border:1px solid #223464;border-radius:12px;padding:12px;margin:14px 0 8px}
+  .warn{color:var(--warn);font-weight:700}
+  /* Drag & Drop */
+  tbody.dropzone{border:1px dashed #2a3b6f;border-radius:12px}
   tr.dragging{opacity:.5}
-  tr.drop-hint{outline:2px solid #a5b4fc}
-  .envHeader{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px;margin-top:10px}
-  .hint{padding:10px;border-radius:12px;background:#f8fafc;border:1px dashed #e2e8f0;font-size:14px}
-  .warn{color:var(--warn);font-weight:600}
+  tr.drop-hint{outline:2px solid #6ea8fe}
 </style>
 </head>
 <body>
-<header><h1>Budget & Épargne – drag & drop + projection</h1></header>
-<nav>
-  <button id="btnBudget" class="active" onclick="showPage('budget')">💰 Budget</button>
-  <button id="btnEpargne" onclick="showPage('epargne')">📊 Épargne & Projets</button>
-</nav>
+<header>
+  <div class="topbar">
+    <div class="logo">💎 Budget & Épargne</div>
+    <div class="tabs">
+      <button id="tabBudget" class="tab active" onclick="showPage('budget')">Budget</button>
+      <button id="tabEpargne" class="tab" onclick="showPage('epargne')">Épargne & Projets</button>
+    </div>
+  </div>
+</header>
 
 <div class="wrap">
-  <!-- PAGE BUDGET -->
+  <!-- KPIs toujours visibles -->
+  <div class="kpis">
+    <div class="kpi"><h4>Revenus (mois)</h4><div class="v" id="kpiRevenus">—</div></div>
+    <div class="kpi"><h4>Budgets Dépenses (mois)</h4><div class="v" id="kpiBudgets">—</div></div>
+    <div class="kpi"><h4>Épargne versée (mois)</h4><div class="v" id="kpiSav">—</div></div>
+    <div class="kpi"><h4>Reste indicatif</h4><div class="v" id="kpiLeft">—</div></div>
+  </div>
+
+  <!-- PAGE: BUDGET -->
   <div id="budget" class="page active">
     <div class="grid">
       <div class="card">
@@ -76,18 +96,19 @@
           <button class="btn" onclick="addSavEnv()">Créer enveloppe</button>
         </div>
         <table class="table">
-          <thead><tr><th>Enveloppe</th><th class="right">Total versé</th><th></th></tr></thead>
+          <thead><tr><th>Enveloppe</th><th class="right">Total versé</th><th class="right">Objectif mensuel</th><th></th></tr></thead>
           <tbody id="savBody"></tbody>
         </table>
         <p><span class="pill">Total épargne versée : <span id="savTotal">0</span> DZD</span></p>
 
-        <h3 style="margin-top:12px">Versement → auto-répartition vers projets liés</h3>
+        <h3>Versement → auto-répartition (respecte la priorité des projets)</h3>
         <div class="row">
           <select id="savSelect"></select>
           <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
           <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
         </div>
-        <p class="muted">La répartition respecte **l’ordre de priorité** des projets de l’enveloppe (drag & drop ou ⬆️⬇️).</p>
+        <p class="muted">Barre ci-dessous : épargne versée en % des revenus.</p>
+        <div class="bar"><i id="barSav"></i></div>
       </div>
 
       <div class="card">
@@ -99,25 +120,28 @@
         </div>
         <table class="table">
           <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
-          <tbody id="depBody"></tbody>
+        <tbody id="depBody"></tbody>
         </table>
         <p><span class="pill">Total dépenses budgétées : <span id="depTotal">0</span> DZD</span></p>
       </div>
 
       <div class="card">
-        <h2>4) Dashboard</h2>
-        <p class="muted"><span class="tag" id="nowMonth"></span></p>
-        <p>Total revenus : <strong id="dashRevenus">—</strong></p>
-        <p>Total dépenses budgétées : <strong id="dashDepBudg">—</strong></p>
-        <p>Épargne versée : <strong id="dashSavAlloue">—</strong></p>
-        <p>Reste indicatif (revenus − budgets − épargne versée) : <strong id="dashLeft">—</strong></p>
-        <div class="bar"><i id="barSpent"></i></div>
-        <p class="muted">Barre = épargne versée en % des revenus.</p>
+        <h2>4) Export / Import des données (CHIFFRÉ)</h2>
+        <div class="row">
+          <input id="expPass" type="password" placeholder="Mot de passe pour chiffrer l’export"/>
+          <button class="btn" onclick="exportEncrypted()">Exporter (AES-GCM)</button>
+        </div>
+        <div class="row">
+          <input id="impPass" type="password" placeholder="Mot de passe de déchiffrement"/>
+          <input id="impFile" type="file" accept=".json,application/json"/>
+          <button class="btn" onclick="importEncrypted()">Importer</button>
+        </div>
+        <p class="muted">Format: PBKDF2(SHA-256, 250k iters) → AES-GCM(256). Ne perds pas le mot de passe.</p>
       </div>
     </div>
   </div>
 
-  <!-- PAGE ÉPARGNE & PROJETS -->
+  <!-- PAGE: ÉPARGNE & PROJETS -->
   <div id="epargne" class="page">
     <div class="card">
       <h2>Projets par enveloppe (drag & drop + priorités)</h2>
@@ -129,16 +153,14 @@
         <input id="projPrix" type="number" inputmode="decimal" placeholder="Objectif (DZD)"/>
         <button class="btn" onclick="addProjet()">Créer projet</button>
       </div>
-      <p class="muted">Réorganise par **glisser-déposer** (ou ⬆️⬇️) pour changer l’ordre de financement. Le projet **en haut** est servi **en premier**.</p>
-
-      <!-- Groupes d’enveloppes + tables projets -->
+      <p class="muted">Glisse-dépose pour changer l’ordre de financement. Le premier est servi en premier.</p>
       <div id="projGroups"></div>
     </div>
 
     <div class="card">
-      <h2>Projection 12 mois (par enveloppe & projets)</h2>
+      <h2>Projection & Boussole</h2>
       <div class="row">
-        <label for="avgMonths" class="muted">Moyenne mensuelle basée sur :</label>
+        <label class="muted">Moyenne mensuelle basée sur :</label>
         <select id="avgMonths">
           <option value="3" selected>3 derniers mois</option>
           <option value="6">6 derniers mois</option>
@@ -147,7 +169,7 @@
         <button class="btn" onclick="renderProjection()">Recalculer</button>
       </div>
       <div id="projectionWrap"></div>
-      <div class="hint" id="compassBox">Conseils en fonction de tes versements et objectifs…</div>
+      <div class="hint" id="compassBox">Conseils dynamiques…</div>
     </div>
   </div>
 </div>
@@ -162,7 +184,7 @@ let SALAIRE = Number(localStorage.getItem("SALAIRE")||0);
 let REVENUS_SUPP = Number(localStorage.getItem("REVENUS_SUPP")||0);
 
 // Épargne – enveloppes & versements
-let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");  // {id,name,totalIn}
+let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");  // {id,name,totalIn,targetM}
 let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");   // {id,date,envId,amount}
 
 // Projets liés à enveloppes (avec priority)
@@ -186,12 +208,12 @@ function persist(){
 /* ========= Navigation ========= */
 function showPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
   $(id).classList.add("active");
-  (id==="budget"?$("btnBudget"):$("btnEpargne")).classList.add("active");
+  (id==="budget"?$("tabBudget"):$("tabEpargne")).classList.add("active");
 }
 
-/* ========= Calculs de base ========= */
+/* ========= Calculs ========= */
 function sumDepBudgets(){ return DEP_ENV.reduce((s,c)=>s+Number(c.budget||0),0); }
 function totalRevenus(){ return (Number(SALAIRE)||0) + (Number(REVENUS_SUPP)||0); }
 function totalSavAlloue(){ return SAV_ENV.reduce((s,e)=> s + Number(e.totalIn||0), 0); }
@@ -214,7 +236,7 @@ function addRevenu(){
 function addSavEnv(){
   const name = ($("savNom").value||"").trim();
   if(!name){ alert("Nom d’enveloppe requis."); return; }
-  SAV_ENV.push({id:crypto.randomUUID(),name,totalIn:0});
+  SAV_ENV.push({id:crypto.randomUUID(),name,totalIn:0,targetM:0});
   $("savNom").value="";
   persist(); renderAll();
 }
@@ -227,21 +249,32 @@ function delSavEnv(id){
   SAV_ENV = SAV_ENV.filter(e=>e.id!==id);
   persist(); renderAll();
 }
+function setEnvTarget(envId){
+  const el = document.getElementById("targetM-"+envId);
+  const v = Number((el?.value)||0);
+  const env = SAV_ENV.find(e=>e.id===envId);
+  if(!env) return;
+  env.targetM = v>0 ? v : 0;
+  persist(); renderAll();
+}
 
 /* — Versement + auto-répartition selon priorité — */
+function ensurePriorities(envId){
+  const ps = PROJ.filter(p=>p.envId===envId);
+  ps.sort((a,b)=> (a.priority??Number.MAX_SAFE_INTEGER) - (b.priority??Number.MAX_SAFE_INTEGER));
+  ps.forEach((p,i)=> p.priority=i);
+}
 function verserEpargne(){
   if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("savSelect").value;
   const amount = Number(($("savVersement").value||0));
   if(!amount){ alert("Montant invalide."); return; }
 
-  // log enveloppe
   const today = new Date().toISOString().slice(0,10);
   SAV_TX.push({id:crypto.randomUUID(),date:today,envId,amount});
   const env = SAV_ENV.find(e=>e.id===envId);
   env.totalIn = Number(env.totalIn||0) + amount;
 
-  // auto-allocate aux projets non terminés triés par priority ASC
   ensurePriorities(envId);
   let remain = amount;
   const list = PROJ
@@ -268,16 +301,6 @@ function getNextPriority(envId){
   if(!ps.length) return 0;
   return Math.max(...ps.map(p=> (p.priority??0))) + 1;
 }
-function ensurePriorities(envId){
-  const ps = PROJ.filter(p=>p.envId===envId);
-  if (ps.some(p=>p.priority===undefined)){
-    ps.sort((a,b)=> (a.priority??Number.MAX_SAFE_INTEGER) - (b.priority??Number.MAX_SAFE_INTEGER));
-    ps.forEach((p,i)=> p.priority=i);
-  } else {
-    ps.sort((a,b)=> (a.priority - b.priority));
-    ps.forEach((p,i)=> p.priority=i);
-  }
-}
 function addProjet(){
   if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("projEnv").value;
@@ -296,34 +319,29 @@ function delProjet(id){
   if(envId) ensurePriorities(envId);
   persist(); renderAll();
 }
-function moveProject(id, dir){ // dir = -1 (up) | +1 (down)
+function moveProject(id, dir){ // dir = -1 | +1
   const p = PROJ.find(x=>x.id===id); if(!p) return;
   ensurePriorities(p.envId);
   const sib = PROJ.filter(x=>x.envId===p.envId).sort((a,b)=>a.priority-b.priority);
   const idx = sib.findIndex(x=>x.id===id);
-  const j = idx + dir;
-  if (j<0 || j>=sib.length) return;
-  const a=sib[idx], b=sib[j];
-  const tmp=a.priority; a.priority=b.priority; b.priority=tmp;
+  const j = idx + dir; if (j<0 || j>=sib.length) return;
+  const a=sib[idx], b=sib[j]; const tmp=a.priority; a.priority=b.priority; b.priority=tmp;
   persist(); renderAll();
 }
 
 /* ---- Drag & Drop intra-enveloppe ---- */
 let dragState = { id:null, envId:null };
-
 function attachDnD(){
-  // pour chaque tbody.dropzone, on branche les handlers
   document.querySelectorAll('tbody.dropzone').forEach(tbody=>{
     tbody.addEventListener('dragover', (e)=>{ e.preventDefault(); const tr = e.target.closest('tr[data-id]'); if(tr) tr.classList.add('drop-hint'); });
     tbody.addEventListener('dragleave', (e)=>{ const tr = e.target.closest('tr[data-id]'); if(tr) tr.classList.remove('drop-hint'); });
     tbody.addEventListener('drop', (e)=>{
       e.preventDefault();
       const zone = e.currentTarget;
-      if (!dragState.id || dragState.envId !== zone.dataset.envId) return; // on n’autorise que dans la même enveloppe
+      if (!dragState.id || dragState.envId !== zone.dataset.envId) return;
       const rows = Array.from(zone.querySelectorAll('tr[data-id]'));
-      const targetRow = e.target.closest('tr[data-id]');
       rows.forEach(r=>r.classList.remove('drop-hint'));
-      // on calcule la nouvelle position : on insère avant targetRow (si existe), sinon à la fin
+      const targetRow = e.target.closest('tr[data-id]');
       const draggedId = dragState.id;
       const orderIds = rows.map(r=>r.dataset.id).filter(x=>x!==draggedId);
       if (targetRow) {
@@ -332,17 +350,11 @@ function attachDnD(){
       } else {
         orderIds.push(draggedId);
       }
-      // met à jour les priorities selon l'ordre DOM calculé
-      orderIds.forEach((pid, i)=>{
-        const p = PROJ.find(x=>x.id===pid);
-        if (p) p.priority = i;
-      });
-      persist(); renderAll();
+      orderIds.forEach((pid, i)=>{ const p = PROJ.find(x=>x.id===pid); if (p) p.priority = i; });
       dragState.id=null; dragState.envId=null;
+      persist(); renderAll();
     });
   });
-
-  // chaque ligne projet devient draggable
   document.querySelectorAll('tr[data-id]').forEach(tr=>{
     tr.setAttribute('draggable','true');
     tr.addEventListener('dragstart', ()=>{
@@ -350,100 +362,79 @@ function attachDnD(){
       dragState.id = tr.dataset.id;
       dragState.envId = tr.dataset.envId;
     });
-    tr.addEventListener('dragend', ()=>{
-      tr.classList.remove('dragging');
-    });
+    tr.addEventListener('dragend', ()=> tr.classList.remove('dragging'));
   });
 }
 
-/* ========= Projection 12 mois ========= */
-function addMonths(date, n){
-  const d = new Date(date.getFullYear(), date.getMonth()+n, 1);
-  // garder la fin de mois simple : on affiche AAAA-MM
-  return d;
-}
-function monthKey(dt){ return dt.toISOString().slice(0,7); }
-function monthsBack(n){
+/* ========= Projection & Boussole ========= */
+function monthKeysBack(n){
   const arr=[]; const d=new Date();
-  for(let i=0;i<n;i++){ const dd=new Date(d.getFullYear(), d.getMonth()-i, 1); arr.push(monthKey(dd)); }
-  return arr; // [YYYY-MM (courant), -1, ...]
+  for(let i=0;i<n;i++){ const dd=new Date(d.getFullYear(), d.getMonth()-i, 1); arr.push(dd.toISOString().slice(0,7)); }
+  return arr;
 }
 function avgMonthlyForEnv(envId, monthsWindow){
-  const keys = monthsBack(monthsWindow);
-  const sums = {};
-  for(const k of keys) sums[k]=0;
+  const keys = monthKeysBack(monthsWindow);
+  const sums = {}; keys.forEach(k=>sums[k]=0);
   for(const t of SAV_TX){
     if(t.envId!==envId) continue;
     const k = (t.date||"").slice(0,7);
-    if (keys.includes(k)) sums[k] += Number(t.amount||0);
+    if (sums[k]!==undefined) sums[k] += Number(t.amount||0);
   }
   const total = keys.reduce((s,k)=> s + (sums[k]||0), 0);
   return total / keys.length;
 }
-
+function addMonths(d,n){ return new Date(d.getFullYear(), d.getMonth()+n, 1); }
 function computeProjectionData(monthsWindow){
-  // retourne des lignes {envName, envId, avg, projectName, remaining, months, etaDate, withinYear, done}
-  const rows=[];
+  const rowsByEnv={};
   for(const env of SAV_ENV){
     const avg = avgMonthlyForEnv(env.id, monthsWindow);
-    // l’ordre = priorité
-    const list = PROJ
-      .filter(p=>p.envId===env.id)
-      .sort((a,b)=>(a.priority??0)-(b.priority??0));
-    let cursorMonth = 0; // cumul mois pour ETA séquentielle
+    const list = PROJ.filter(p=>p.envId===env.id).sort((a,b)=>(a.priority??0)-(b.priority??0));
+    let cursor=0;
+    rowsByEnv[env.id] = { name:env.name, avg, targetM:env.targetM||0, items:[] };
     for(const p of list){
-      const remaining = Math.max(0, Number(p.target||0)-Number(p.saved||0));
-      if (remaining===0){
-        rows.push({envName:env.name, envId:env.id, avg, projectName:p.name, remaining:0, months:0, etaDate:new Date(), withinYear:true, done:true});
-        continue;
-      }
-      if (avg<=0){
-        rows.push({envName:env.name, envId:env.id, avg, projectName:p.name, remaining, months:Infinity, etaDate:null, withinYear:false, done:false});
-        continue;
-      }
+      const remaining = Math.max(0, Number(p.target||0) - Number(p.saved||0));
+      if (remaining===0){ rowsByEnv[env.id].items.push({project:p.name, remaining:0, months:0, eta:new Date(), done:true}); continue; }
+      if (avg<=0){ rowsByEnv[env.id].items.push({project:p.name, remaining, months:Infinity, eta:null, done:false}); continue; }
       const mNeeded = Math.ceil(remaining / avg);
-      cursorMonth += mNeeded;
-      const eta = addMonths(new Date(), cursorMonth);
-      rows.push({envName:env.name, envId:env.id, avg, projectName:p.name, remaining, months:mNeeded, etaDate:eta, withinYear: cursorMonth<=12, done:false});
+      cursor += mNeeded;
+      rowsByEnv[env.id].items.push({project:p.name, remaining, months:mNeeded, eta:addMonths(new Date(), cursor), done:false});
     }
   }
-  return rows;
+  return rowsByEnv;
 }
-
 function renderProjection(){
   const win = Number(($("avgMonths").value||3));
-  const rows = computeProjectionData(win);
+  const byEnv = computeProjectionData(win);
 
-  if(!rows.length){
-    $("projectionWrap").innerHTML = `<p class="muted">Aucun projet ou enveloppe d’épargne pour l’instant.</p>`;
-    $("compassBox").textContent = "Ajoute une enveloppe d’épargne et au moins un projet pour voir la projection.";
-    return;
-  }
-
-  // construire un tableau groupé par enveloppe
-  const byEnv = {};
-  for(const r of rows){
-    if(!byEnv[r.envId]) byEnv[r.envId] = {name:r.envName, avg:r.avg, items:[]};
-    byEnv[r.envId].items.push(r);
-  }
-
-  let html = "";
-  for(const envId of Object.keys(byEnv)){
-    const group = byEnv[envId];
+  // tableau
+  let html="";
+  const ids = Object.keys(byEnv).sort((a,b)=> byEnv[a].name.localeCompare(byEnv[b].name));
+  ids.forEach(id=>{
+    const g = byEnv[id];
     html += `
-      <div class="envHeader"><strong>Enveloppe :</strong> ${group.name} — <span class="muted">Moyenne mensuelle (${win} mois) :</span> <strong>${fmt(group.avg||0)}</strong></div>
+      <div class="envHeader">
+        <div class="row" style="align-items:center">
+          <div style="flex:2"><strong>Enveloppe :</strong> ${g.name}</div>
+          <div><span class="pill">Moyenne (${win}m) : ${fmt(g.avg||0)}</span></div>
+          <div class="row" style="gap:6px;flex:1">
+            <input id="targetM-${id}" placeholder="Objectif mensuel (DZD)" value="${SAV_ENV.find(e=>e.id===id)?.targetM||''}">
+            <button class="btn" onclick="setEnvTarget('${id}')">Fixer objectif</button>
+          </div>
+        </div>
+        <div class="muted">Écart (moyenne − objectif) : <strong>${fmt((g.avg||0)-(SAV_ENV.find(e=>e.id===id)?.targetM||0))}</strong></div>
+      </div>
       <table class="table">
         <thead><tr><th>Projet</th><th class="right">Restant</th><th class="right">Mois estimés</th><th>Date estimée</th><th>Statut</th></tr></thead>
         <tbody>
           ${
-            group.items.map(it=>{
-              const eta = it.etaDate ? it.etaDate.toLocaleString("fr-DZ",{year:"numeric", month:"long"}) : "—";
+            g.items.map(it=>{
+              const eta = it.eta ? it.eta.toLocaleString("fr-DZ",{year:"numeric", month:"long"}) : "—";
               let statut = "";
               if (it.done) statut = `<span class="success">Atteint ✅</span>`;
               else if (!isFinite(it.months)) statut = `<span class="warn">Aucun versement récent</span>`;
-              else statut = it.withinYear ? `<span class="success">≤ 12 mois</span>` : `<span class="muted">> 12 mois</span>`;
+              else statut = it.months<=12 ? `<span class="success">≤ 12 mois</span>` : `<span class="muted">> 12 mois</span>`;
               return `<tr>
-                <td>${it.projectName}</td>
+                <td>${it.project}</td>
                 <td class="right">${fmt(it.remaining)}</td>
                 <td class="right">${isFinite(it.months)? it.months : "∞"}</td>
                 <td>${eta}</td>
@@ -454,40 +445,78 @@ function renderProjection(){
         </tbody>
       </table>
     `;
-  }
+  });
   $("projectionWrap").innerHTML = html;
 
-  // Boussole simple
-  const tips = [];
-  // env sans versement
-  const starved = Object.values(byEnv).filter(g=> (g.avg||0)===0 && g.items.some(i=>!i.done));
-  if (starved.length){
-    tips.push(`<div class="warn">Aucune moyenne de versement sur : ${starved.map(g=>`<strong>${g.name}</strong>`).join(", ")}. Fixe un versement mensuel minimal.</div>`);
+  // Boussole agressive
+  const tips=[];
+  // 1) équilibre global sur objectifs mensuels vs cash disponible
+  const totalTargets = SAV_ENV.reduce((s,e)=> s + Number(e.targetM||0), 0);
+  const cash = totalRevenus() - sumDepBudgets();
+  if (totalTargets > cash){
+    const gap = totalTargets - cash;
+    tips.push(`<p class="warn">Tes objectifs mensuels d’épargne dépassent ton cash disponible de <strong>${fmt(gap)}</strong>. 
+    → Réduis tes budgets de dépenses ou baisse provisoirement les objectifs d’enveloppes. 
+    Reco rapide: diminuer chaque objectif de <strong>${fmt(Math.ceil(gap/Math.max(1,SAV_ENV.length)))}</strong>.</p>`);
   }
-  // projets > 12 mois
-  const longies = rows.filter(r=>!r.done && isFinite(r.months) && !r.withinYear);
-  if (longies.length){
-    tips.push(`<div>Plusieurs objectifs dépassent 12 mois. Options : augmenter le versement des enveloppes concernées, ou remonter la priorité de projets plus stratégiques.</div>`);
+  // 2) enveloppes sans versement récent
+  const win = Number(($("avgMonths").value||3));
+  const starving = SAV_ENV.filter(e=> (avgMonthlyForEnv(e.id, win)||0)===0 && PROJ.some(p=>p.envId===e.id && !p.done));
+  if (starving.length){
+    tips.push(`<p class="warn">Aucune moyenne de versement sur : ${starving.map(e=>`<strong>${e.name}</strong>`).join(", ")}. Fixe un minimum mensuel (ex: 5–10% des revenus).</p>`);
   }
+  // 3) enveloppes où avg < targetM
+  SAV_ENV.forEach(e=>{
+    const avg = avgMonthlyForEnv(e.id, win)||0;
+    const targ = Number(e.targetM||0);
+    if (targ>0 && avg < targ){
+      tips.push(`<p>Augmente <strong>${e.name}</strong> de <strong>${fmt(targ-avg)}</strong>/mois pour atteindre l’objectif défini.</p>`);
+    }
+  });
+  // 4) projets > 12 mois ⇒ reco “objectif mensuel” env = somme restants / 12
+  SAV_ENV.forEach(e=>{
+    const list = PROJ.filter(p=>p.envId===e.id);
+    const sumRemaining = list.reduce((s,p)=> s + Math.max(0, Number(p.target||0)-Number(p.saved||0)), 0);
+    if (sumRemaining>0){
+      const needPerMonth = Math.ceil(sumRemaining/12);
+      const avg = avgMonthlyForEnv(e.id, win)||0;
+      if (avg < needPerMonth){
+        tips.push(`<p>${e.name}: pour boucler <em>tous</em> les projets ≤ 12 mois, vise <strong>${fmt(needPerMonth)}</strong>/mois (actuel: ${fmt(avg)}).</p>`);
+      }
+    }
+  });
   if (!tips.length){
-    tips.push(`<div class="success">Cap OK : tes enveloppes et priorités mènent à des objectifs atteignables dans l’année.</div>`);
+    tips.push(`<p class="success">Cap OK : tes objectifs sont soutenables avec tes versements actuels.</p>`);
   }
-  $("compassBox").innerHTML = tips.map(t=>`<p>${t}</p>`).join("");
+  $("compassBox").innerHTML = tips.join("");
 }
 
 /* ========= Rendering ========= */
 function renderBudget(){
-  $("nowMonth").textContent = new Date().toLocaleString("fr-DZ",{month:"long",year:"numeric"});
-  $("revenusInfo").innerHTML = `💰 Salaire : ${fmt(SALAIRE)}<br>➕ Revenus supplémentaires : ${fmt(REVENUS_SUPP)}<br>📊 Total revenus : ${fmt(totalRevenus())}`;
+  const revenus = totalRevenus();
+  const budgets = sumDepBudgets();
+  const sav = totalSavAlloue();
+  const left = Math.max(0, revenus - budgets - sav);
+
+  $("kpiRevenus").textContent = fmt(revenus);
+  $("kpiBudgets").textContent = fmt(budgets);
+  $("kpiSav").textContent = fmt(sav);
+  $("kpiLeft").textContent = fmt(left);
+
+  $("revenusInfo").innerHTML = `💰 Salaire : ${fmt(SALAIRE)} • ➕ Revenus sup. : ${fmt(REVENUS_SUPP)} • 📊 Total : ${fmt(revenus)}`;
 
   // Épargne – enveloppes
-  $("savBody").innerHTML = SAV_ENV.map(e=>`
-    <tr>
-      <td>${e.name}</td>
-      <td class="right">${fmt(e.totalIn||0)}</td>
-      <td class="right"><button class="danger" onclick="delSavEnv('${e.id}')">Suppr.</button></td>
-    </tr>
-  `).join("");
+  $("savBody").innerHTML = SAV_ENV.map(e=>{
+    const t = e.targetM||0;
+    return `
+      <tr>
+        <td>${e.name}</td>
+        <td class="right">${fmt(e.totalIn||0)}</td>
+        <td class="right">${t?fmt(t):"<span class='muted'>—</span>"}</td>
+        <td class="right"><button class="danger" onclick="delSavEnv('${e.id}')">Suppr.</button></td>
+      </tr>
+    `;
+  }).join("");
   $("savTotal").textContent = just(totalSavAlloue());
   $("savSelect").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
 
@@ -501,24 +530,20 @@ function renderBudget(){
   `).join("");
   $("depTotal").textContent = just(sumDepBudgets());
 
-  // Dashboard simple
-  $("dashRevenus").textContent = fmt(totalRevenus());
-  $("dashDepBudg").textContent = fmt(sumDepBudgets());
-  $("dashSavAlloue").textContent = fmt(totalSavAlloue());
-  const left = Math.max(0, totalRevenus() - sumDepBudgets() - totalSavAlloue());
-  $("dashLeft").textContent = fmt(left);
-  const ratio = totalRevenus()? Math.min(100, Math.round((totalSavAlloue()/totalRevenus())*100)) : 0;
-  $("barSpent").style.width = ratio + "%";
+  // barre % épargne / revenus
+  const ratio = revenus ? Math.min(100, Math.round((sav/revenus)*100)) : 0;
+  $("barSav").style.width = ratio + "%";
+
+  // sélecteurs
+  $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
 }
 
-/* --- Rendu projets groupés par enveloppe avec DnD --- */
+/* --- Projets groupés + DnD --- */
 function renderProjectsGrouped(){
-  // groupe par enveloppe
   const groups = {};
   for(const e of SAV_ENV){ groups[e.id] = { name:e.name, id:e.id, items:[] }; }
   for(const p of PROJ){ if(groups[p.envId]) groups[p.envId].items.push(p); }
 
-  // tri par priorité et rendu
   let html = "";
   const envIds = Object.keys(groups).sort((a,b)=> groups[a].name.localeCompare(groups[b].name));
   envIds.forEach(envId=>{
@@ -544,7 +569,7 @@ function renderProjectsGrouped(){
                   <div class="muted">${status}</div>
                 </td>
                 <td>
-                  <div class="prio">
+                  <div class="row" style="gap:6px">
                     <button class="ghost" onclick="moveProject('${p.id}', -1)">⬆️</button>
                     <button class="ghost" onclick="moveProject('${p.id}', 1)">⬇️</button>
                   </div>
@@ -564,23 +589,100 @@ function renderProjectsGrouped(){
 }
 
 function renderEpargne(){
-  // sélecteur d’enveloppe pour créer projet
-  $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
   renderProjectsGrouped();
   renderProjection();
 }
 
 function renderAll(){
-  $("nowMonth").textContent = new Date().toLocaleString("fr-DZ",{month:"long",year:"numeric"});
   renderBudget();
   renderEpargne();
 }
 
+/* ========= Export / Import CHIFFRÉ ========= */
+// Utils b64
+function b64enc(buf){
+  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
+  let bin=""; for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b64dec(b64){
+  const bin = atob(b64);
+  const len = bin.length;
+  const bytes = new Uint8Array(len);
+  for(let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+async function deriveKey(pass, salt, iterations=250000){
+  const enc = new TextEncoder();
+  const baseKey = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+  return await crypto.subtle.deriveKey(
+    {name:'PBKDF2', salt, iterations, hash:'SHA-256'},
+    baseKey,
+    {name:'AES-GCM', length:256},
+    false,
+    ['encrypt','decrypt']
+  );
+}
+
+async function exportEncrypted(){
+  try{
+    const pass = ($("expPass").value||"").trim();
+    if(!pass){ alert("Entre un mot de passe pour chiffrer."); return; }
+    const data = { SALAIRE, REVENUS_SUPP, SAV_ENV, SAV_TX, PROJ, PROJ_TX, DEP_ENV };
+    const enc = new TextEncoder().encode(JSON.stringify(data));
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(pass, salt, 250000);
+    const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc);
+    const payload = {
+      v:1, alg:'AES-GCM', kdf:'PBKDF2', iter:250000,
+      salt: b64enc(salt), iv: b64enc(iv), ct: b64enc(ct)
+    };
+    const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href=url; a.download=`budget-secure-${new Date().toISOString().slice(0,10)}.json`;
+    a.click(); URL.revokeObjectURL(url);
+    alert("Export chiffré OK.");
+  }catch(e){
+    alert("Échec export: " + e.message);
+  }
+}
+
+async function importEncrypted(){
+  try{
+    const pass = ($("impPass").value||"").trim();
+    const file = $("impFile").files?.[0];
+    if(!pass){ alert("Entre le mot de passe de déchiffrement."); return; }
+    if(!file){ alert("Choisis le fichier exporté."); return; }
+    const text = await file.text();
+    const payload = JSON.parse(text);
+    const salt = b64dec(payload.salt);
+    const iv = b64dec(payload.iv);
+    const ct = b64dec(payload.ct);
+    const key = await deriveKey(pass, salt, payload.iter||250000);
+    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+    const json = JSON.parse(new TextDecoder().decode(pt));
+    // charger
+    SALAIRE = Number(json.SALAIRE||0);
+    REVENUS_SUPP = Number(json.REVENUS_SUPP||0);
+    SAV_ENV = Array.isArray(json.SAV_ENV)? json.SAV_ENV : [];
+    SAV_TX = Array.isArray(json.SAV_TX)? json.SAV_TX : [];
+    PROJ = Array.isArray(json.PROJ)? json.PROJ : [];
+    PROJ_TX = Array.isArray(json.PROJ_TX)? json.PROJ_TX : [];
+    DEP_ENV = Array.isArray(json.DEP_ENV)? json.DEP_ENV : [];
+    persist(); renderAll();
+    alert("Import déchiffré OK.");
+  }catch(e){
+    alert("Échec import (mot de passe ? fichier ?) : " + e.message);
+  }
+}
+
 /* ========= Boot ========= */
 (function init(){
-  // compat anciens projets : assigne des priorités
-  const envIds = [...new Set(PROJ.map(p=>p.envId))];
-  envIds.forEach(ensurePriorities);
+  // compat anciennes données
+  for(const e of SAV_ENV){ if(e.targetM===undefined) e.targetM = 0; }
   renderAll();
 })();
 </script>
