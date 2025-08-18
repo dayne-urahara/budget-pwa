@@ -3,21 +3,24 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Budget & Épargne — chiffrage + boussole</title>
+<meta name="theme-color" content="#000000"/>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<title>Budget & Épargne — thème noir</title>
 <style>
   :root{
-    --bg:#0b1020; --card:#0f162e; --ink:#e6e9f5; --muted:#a6b0cf; --ring:#24304f; --accent:#6ea8fe;
-    --good:#22c55e; --bad:#ef4444; --warn:#f59e0b; --chip:#1b2441; --chip2:#10172a;
+    --bg:#000; --card:#111; --ink:#fff; --muted:#b7b7b7; --ring:#222; --accent:#0ea5e9;
+    --good:#22c55e; --bad:#ef4444; --warn:#f59e0b; --chip:#0c0c0c; --chip2:#151515;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#0a0f1f,#0f1326);color:var(--ink)}
-  header{position:sticky;top:0;z-index:20;background:rgba(10,15,31,.85);backdrop-filter:saturate(130%) blur(6px);border-bottom:1px solid #1a2240}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+  header{position:sticky;top:0;z-index:20;background:#000; border-bottom:1px solid var(--ring)}
   .topbar{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:12px;padding:12px 16px}
-  .logo{font-weight:700;letter-spacing:.3px}
+  .logo{font-weight:800;letter-spacing:.2px}
   .tabs{display:flex;gap:8px;margin-left:auto}
   .tab{padding:10px 14px;border:1px solid var(--ring);border-radius:12px;background:var(--chip);color:var(--ink);cursor:pointer}
-  .tab.active{background:var(--accent);color:#0b1020;border-color:transparent;font-weight:700}
+  .tab.active{background:var(--accent);color:#000;border-color:transparent;font-weight:800}
   .wrap{max-width:1280px;margin:0 auto;padding:16px}
   .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:10px 0 16px}
   @media (max-width:900px){ .kpis{grid-template-columns:repeat(2,1fr)} }
@@ -30,27 +33,29 @@
   h2{margin:0 0 10px 0;font-size:18px}
   h3{margin:10px 0 8px 0;font-size:16px}
   input,select,button{width:100%;padding:11px;border-radius:12px;border:1px solid var(--ring);font-size:15px;background:var(--chip2);color:var(--ink)}
-  button.btn{border:none;background:var(--accent);color:#0b1020;font-weight:700;cursor:pointer}
+  button.btn{border:none;background:var(--accent);color:#000;font-weight:800;cursor:pointer}
   .row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1}
   .muted{color:var(--muted);font-size:14px}
   .table{width:100%;border-collapse:collapse;margin-top:10px}
-  .table th,.table td{border-bottom:1px dashed #253154;padding:10px;text-align:left;vertical-align:top}
+  .table th,.table td{border-bottom:1px dashed #2a2a2a;padding:10px;text-align:left;vertical-align:top}
   .table thead th{color:var(--muted);font-size:13px}
   .right{text-align:right}
-  .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#10244a;color:#9ec1ff;font-size:12px;border:1px solid #22407c}
-  .success{color:var(--good);font-weight:700}
+  .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#0a0a0a;color:#9ee7ff;font-size:12px;border:1px solid #1f2a2e}
+  .success{color:var(--good);font-weight:800}
   .danger{background:var(--bad);color:#fff;border:none;padding:7px 10px;border-radius:10px;cursor:pointer}
-  .ghost{background:#182241;color:#e6e9f5;border:1px solid #2a3b6f;padding:6px 8px;border-radius:10px;cursor:pointer}
-  .bar{height:8px;background:#1b2441;border-radius:999px;overflow:hidden}
-  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#5eead4,#60a5fa);width:0%}
-  .hint{padding:10px;border-radius:12px;background:#0e1a38;border:1px dashed #223464;font-size:14px;color:#c5d2fb}
+  .ghost{background:#1a1a1a;color:#fff;border:1px solid #2a2a2a;padding:6px 8px;border-radius:10px;cursor:pointer}
+  .bar{height:8px;background:#1a1a1a;border-radius:999px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#22c55e,#0ea5e9);width:0%}
+  .hint{padding:10px;border-radius:12px;background:#0b0b0b;border:1px dashed #222;font-size:14px;color:#e8e8e8}
   .page{display:none}.page.active{display:block}
-  .envHeader{background:#0e1a38;border:1px solid #223464;border-radius:12px;padding:12px;margin:14px 0 8px}
-  .warn{color:var(--warn);font-weight:700}
+  .envHeader{background:#0b0b0b;border:1px solid #222;border-radius:12px;padding:12px;margin:14px 0 8px}
+  .warn{color:var(--warn);font-weight:800}
   /* Drag & Drop */
-  tbody.dropzone{border:1px dashed #2a3b6f;border-radius:12px}
+  tbody.dropzone{border:1px dashed #2a2a2a;border-radius:12px}
   tr.dragging{opacity:.5}
-  tr.drop-hint{outline:2px solid #6ea8fe}
+  tr.drop-hint{outline:2px solid #0ea5e9}
+  /* snackbar erreurs */
+  #snack{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);background:#111;border:1px solid #333;color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:50}
 </style>
 </head>
 <body>
@@ -58,14 +63,14 @@
   <div class="topbar">
     <div class="logo">💎 Budget & Épargne</div>
     <div class="tabs">
-      <button id="tabBudget" class="tab active" onclick="showPage('budget')">Budget</button>
-      <button id="tabEpargne" class="tab" onclick="showPage('epargne')">Épargne & Projets</button>
+      <button id="tabBudget" class="tab active" type="button">Budget</button>
+      <button id="tabEpargne" class="tab" type="button">Épargne & Projets</button>
     </div>
   </div>
 </header>
 
 <div class="wrap">
-  <!-- KPIs toujours visibles -->
+  <!-- KPIs -->
   <div class="kpis">
     <div class="kpi"><h4>Revenus (mois)</h4><div class="v" id="kpiRevenus">—</div></div>
     <div class="kpi"><h4>Budgets Dépenses (mois)</h4><div class="v" id="kpiBudgets">—</div></div>
@@ -79,12 +84,12 @@
       <div class="card">
         <h2>1) Revenus</h2>
         <div class="row">
-          <input id="salaireInput" type="number" inputmode="decimal" placeholder="Salaire mensuel (DZD)"/>
-          <button class="btn" onclick="saveSalaire()">Enregistrer</button>
+          <input id="salaireInput" inputmode="decimal" placeholder="Salaire mensuel (DZD)"/>
+          <button class="btn" id="btnSaveSalaire" type="button">Enregistrer</button>
         </div>
         <div class="row">
-          <input id="revenuInput" type="number" inputmode="decimal" placeholder="Autre revenu ponctuel (DZD)"/>
-          <button class="btn" onclick="addRevenu()">Ajouter revenu</button>
+          <input id="revenuInput" inputmode="decimal" placeholder="Autre revenu ponctuel (DZD)"/>
+          <button class="btn" id="btnAddRevenu" type="button">Ajouter revenu</button>
         </div>
         <p id="revenusInfo" class="muted"></p>
       </div>
@@ -93,7 +98,7 @@
         <h2>2) Enveloppes d’ÉPARGNE</h2>
         <div class="row">
           <input id="savNom" placeholder="Nom (Aménagement, Voyage, Sécurité, Or…)"/>
-          <button class="btn" onclick="addSavEnv()">Créer enveloppe</button>
+          <button class="btn" id="btnAddSavEnv" type="button">Créer enveloppe</button>
         </div>
         <table class="table">
           <thead><tr><th>Enveloppe</th><th class="right">Total versé</th><th class="right">Objectif mensuel</th><th></th></tr></thead>
@@ -101,13 +106,13 @@
         </table>
         <p><span class="pill">Total épargne versée : <span id="savTotal">0</span> DZD</span></p>
 
-        <h3>Versement → auto-répartition (respecte la priorité des projets)</h3>
+        <h3>Versement → auto-répartition (priorités)</h3>
         <div class="row">
           <select id="savSelect"></select>
-          <input id="savVersement" type="number" inputmode="decimal" placeholder="Montant (DZD)"/>
-          <button class="btn" onclick="verserEpargne()">Verser & répartir</button>
+          <input id="savVersement" inputmode="decimal" placeholder="Montant (DZD)"/>
+          <button class="btn" id="btnVerser" type="button">Verser & répartir</button>
         </div>
-        <p class="muted">Barre ci-dessous : épargne versée en % des revenus.</p>
+        <p class="muted">Barre : épargne versée en % des revenus.</p>
         <div class="bar"><i id="barSav"></i></div>
       </div>
 
@@ -115,28 +120,28 @@
         <h2>3) Enveloppes de DÉPENSES (facultatif)</h2>
         <div class="row">
           <input id="depNom" placeholder="Nom (Courses, Véhicule, Scolaire…)"/>
-          <input id="depMontant" type="number" inputmode="decimal" placeholder="Budget mensuel (DZD)"/>
-          <button class="btn" onclick="addDepenseEnv()">Ajouter</button>
+          <input id="depMontant" inputmode="decimal" placeholder="Budget mensuel (DZD)"/>
+          <button class="btn" id="btnAddDepEnv" type="button">Ajouter</button>
         </div>
         <table class="table">
           <thead><tr><th>Catégorie</th><th class="right">Budget</th><th></th></tr></thead>
-        <tbody id="depBody"></tbody>
+          <tbody id="depBody"></tbody>
         </table>
         <p><span class="pill">Total dépenses budgétées : <span id="depTotal">0</span> DZD</span></p>
       </div>
 
       <div class="card">
-        <h2>4) Export / Import des données (CHIFFRÉ)</h2>
+        <h2>4) Export / Import (CHIFFRÉ)</h2>
         <div class="row">
-          <input id="expPass" type="password" placeholder="Mot de passe pour chiffrer l’export"/>
-          <button class="btn" onclick="exportEncrypted()">Exporter (AES-GCM)</button>
+          <input id="expPass" type="password" placeholder="Mot de passe export"/>
+          <button class="btn" id="btnExport" type="button">Exporter (AES-GCM)</button>
         </div>
         <div class="row">
-          <input id="impPass" type="password" placeholder="Mot de passe de déchiffrement"/>
+          <input id="impPass" type="password" placeholder="Mot de passe import"/>
           <input id="impFile" type="file" accept=".json,application/json"/>
-          <button class="btn" onclick="importEncrypted()">Importer</button>
+          <button class="btn" id="btnImport" type="button">Importer</button>
         </div>
-        <p class="muted">Format: PBKDF2(SHA-256, 250k iters) → AES-GCM(256). Ne perds pas le mot de passe.</p>
+        <p class="muted">PBKDF2(SHA-256, 250k) → AES-GCM(256). Garde le mot de passe.</p>
       </div>
     </div>
   </div>
@@ -144,29 +149,29 @@
   <!-- PAGE: ÉPARGNE & PROJETS -->
   <div id="epargne" class="page">
     <div class="card">
-      <h2>Projets par enveloppe (drag & drop + priorités)</h2>
+      <h2>Projets (drag & drop + priorités)</h2>
       <div class="row">
         <select id="projEnv"></select>
         <input id="projNom" placeholder="Nom du projet (ex: Meuble salle de bain)"/>
       </div>
       <div class="row">
-        <input id="projPrix" type="number" inputmode="decimal" placeholder="Objectif (DZD)"/>
-        <button class="btn" onclick="addProjet()">Créer projet</button>
+        <input id="projPrix" inputmode="decimal" placeholder="Objectif (DZD)"/>
+        <button class="btn" id="btnAddProjet" type="button">Créer projet</button>
       </div>
-      <p class="muted">Glisse-dépose pour changer l’ordre de financement. Le premier est servi en premier.</p>
+      <p class="muted">Le projet en haut est servi en premier lors des versements.</p>
       <div id="projGroups"></div>
     </div>
 
     <div class="card">
       <h2>Projection & Boussole</h2>
       <div class="row">
-        <label class="muted">Moyenne mensuelle basée sur :</label>
+        <label class="muted">Moyenne basée sur :</label>
         <select id="avgMonths">
           <option value="3" selected>3 derniers mois</option>
           <option value="6">6 derniers mois</option>
           <option value="12">12 derniers mois</option>
         </select>
-        <button class="btn" onclick="renderProjection()">Recalculer</button>
+        <button class="btn" id="btnRecalc" type="button">Recalculer</button>
       </div>
       <div id="projectionWrap"></div>
       <div class="hint" id="compassBox">Conseils dynamiques…</div>
@@ -174,74 +179,107 @@
   </div>
 </div>
 
+<div id="snack"></div>
+
 <script>
-/* ========= State ========= */
+/* ======= Helpers sûrs ======= */
 const $ = id => document.getElementById(id);
+function snack(msg){ const n=$("snack"); n.textContent=msg; n.style.display="block"; setTimeout(()=>n.style.display="none",2500); }
+// parseur robuste: accepte "10 000", "10,000", "10.000", "10 000", "10k" (->10000), "1,5" (->1.5)
+function toNumber(v){
+  if(typeof v==="number") return isFinite(v)?v:0;
+  v = (v||"").toString().trim().toLowerCase();
+  if(!v) return 0;
+  v = v.replace(/\s| /g,"");
+  if(/^\d+k$/.test(v)) return parseFloat(v)*1000;
+  // si virgule comme décimal (fr), remplace par point si pas déjà un point décimal
+  if(v.indexOf(",")>=0 && v.indexOf(".")===-1) v=v.replace(/,/g,".");
+  // supprime tout sauf chiffres, point, signe -
+  v = v.replace(/[^0-9.-]/g,"");
+  const n = parseFloat(v);
+  return isFinite(n)? n : 0;
+}
+// format DZD
 const fmt = n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0))+" DZD";
-const just = n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
-
-let SALAIRE = Number(localStorage.getItem("SALAIRE")||0);
-let REVENUS_SUPP = Number(localStorage.getItem("REVENUS_SUPP")||0);
-
-// Épargne – enveloppes & versements
-let SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");  // {id,name,totalIn,targetM}
-let SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");   // {id,date,envId,amount}
-
-// Projets liés à enveloppes (avec priority)
-let PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");     // {id,name,envId,target,saved,done,priority}
-let PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");  // {id,date,projectId,amount,envId}
-
-// Dépenses budgétées (facultatif)
-let DEP_ENV = JSON.parse(localStorage.getItem("DEP_ENV")||"[]");  // {id,name,budget}
-
-/* ========= Persist ========= */
-function persist(){
-  localStorage.setItem("SALAIRE",SALAIRE);
-  localStorage.setItem("REVENUS_SUPP",REVENUS_SUPP);
-  localStorage.setItem("SAV_ENV",JSON.stringify(SAV_ENV));
-  localStorage.setItem("SAV_TX",JSON.stringify(SAV_TX));
-  localStorage.setItem("PROJ",JSON.stringify(PROJ));
-  localStorage.setItem("PROJ_TX",JSON.stringify(PROJ_TX));
-  localStorage.setItem("DEP_ENV",JSON.stringify(DEP_ENV));
+const just= n => new Intl.NumberFormat("fr-DZ").format(Math.round(Number(n)||0));
+// randomUUID polyfill
+if(!(crypto && crypto.randomUUID)){
+  crypto.randomUUID = () => 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c=>{
+    const r = Math.random()*16|0, v = c==='x'? r : (r&0x3|0x8); return v.toString(16);
+  });
 }
 
-/* ========= Navigation ========= */
+/* ======= State (isole dans try/catch localStorage) ======= */
+let SALAIRE=0, REVENUS_SUPP=0, SAV_ENV=[], SAV_TX=[], PROJ=[], PROJ_TX=[], DEP_ENV=[];
+try{
+  SALAIRE = toNumber(localStorage.getItem("SALAIRE")||0);
+  REVENUS_SUPP = toNumber(localStorage.getItem("REVENUS_SUPP")||0);
+  SAV_ENV = JSON.parse(localStorage.getItem("SAV_ENV")||"[]");
+  SAV_TX  = JSON.parse(localStorage.getItem("SAV_TX")||"[]");
+  PROJ    = JSON.parse(localStorage.getItem("PROJ")||"[]");
+  PROJ_TX = JSON.parse(localStorage.getItem("PROJ_TX")||"[]");
+  DEP_ENV = JSON.parse(localStorage.getItem("DEP_ENV")||"[]");
+}catch(e){
+  snack("Stockage indisponible (mode privé ?) — données non persistées.");
+  SALAIRE=0; REVENUS_SUPP=0; SAV_ENV=[]; SAV_TX=[]; PROJ=[]; PROJ_TX=[]; DEP_ENV=[];
+}
+function persist(){
+  try{
+    localStorage.setItem("SALAIRE",SALAIRE);
+    localStorage.setItem("REVENUS_SUPP",REVENUS_SUPP);
+    localStorage.setItem("SAV_ENV",JSON.stringify(SAV_ENV));
+    localStorage.setItem("SAV_TX",JSON.stringify(SAV_TX));
+    localStorage.setItem("PROJ",JSON.stringify(PROJ));
+    localStorage.setItem("PROJ_TX",JSON.stringify(PROJ_TX));
+    localStorage.setItem("DEP_ENV",JSON.stringify(DEP_ENV));
+  }catch(e){ /* ignore quota errors silently */ }
+}
+
+/* ======= Navigation (blindée) ======= */
 function showPage(id){
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-  $(id).classList.add("active");
-  (id==="budget"?$("tabBudget"):$("tabEpargne")).classList.add("active");
+  const page = $(id);
+  const tab  = (id==="budget")? $("tabBudget") : $("tabEpargne");
+  if(page) page.classList.add("active");
+  if(tab)  tab.classList.add("active");
 }
+$("tabBudget").addEventListener("click", ()=>showPage("budget"));
+$("tabEpargne").addEventListener("click", ()=>showPage("epargne"));
 
-/* ========= Calculs ========= */
-function sumDepBudgets(){ return DEP_ENV.reduce((s,c)=>s+Number(c.budget||0),0); }
-function totalRevenus(){ return (Number(SALAIRE)||0) + (Number(REVENUS_SUPP)||0); }
-function totalSavAlloue(){ return SAV_ENV.reduce((s,e)=> s + Number(e.totalIn||0), 0); }
+/* ======= Calculs ======= */
+const monthKeysBack = n => {
+  const arr=[]; const d=new Date();
+  for(let i=0;i<n;i++){ const dd=new Date(d.getFullYear(), d.getMonth()-i, 1); arr.push(dd.toISOString().slice(0,7)); }
+  return arr;
+};
+const sumDepBudgets = () => DEP_ENV.reduce((s,c)=>s+toNumber(c.budget),0);
+const totalRevenus  = () => toNumber(SALAIRE) + toNumber(REVENUS_SUPP);
+const totalSavAlloue= () => SAV_ENV.reduce((s,e)=> s + toNumber(e.totalIn||0), 0);
 
-/* ========= Revenus ========= */
+/* ======= Revenus ======= */
 function saveSalaire(){
-  const v = Number(($("salaireInput").value||0));
-  if(!v){ alert("Salaire invalide."); return; }
+  const v = toNumber($("salaireInput").value);
+  if(!v){ snack("Salaire invalide."); return; }
   SALAIRE=v; $("salaireInput").value="";
   persist(); renderAll();
 }
 function addRevenu(){
-  const v = Number(($("revenuInput").value||0));
-  if(!v){ alert("Montant de revenu invalide."); return; }
+  const v = toNumber($("revenuInput").value);
+  if(!v){ snack("Montant de revenu invalide."); return; }
   REVENUS_SUPP += v; $("revenuInput").value="";
   persist(); renderAll();
 }
 
-/* ========= Épargne – enveloppes ========= */
+/* ======= Épargne – enveloppes ======= */
 function addSavEnv(){
   const name = ($("savNom").value||"").trim();
-  if(!name){ alert("Nom d’enveloppe requis."); return; }
+  if(!name){ snack("Nom d’enveloppe requis."); return; }
   SAV_ENV.push({id:crypto.randomUUID(),name,totalIn:0,targetM:0});
   $("savNom").value="";
   persist(); renderAll();
 }
 function delSavEnv(id){
-  // Supprime enveloppe + versements + projets & tx liés
   SAV_TX = SAV_TX.filter(t=>t.envId!==id);
   const projIds = PROJ.filter(p=>p.envId===id).map(p=>p.id);
   PROJ_TX = PROJ_TX.filter(x=> !projIds.includes(x.projectId));
@@ -251,29 +289,29 @@ function delSavEnv(id){
 }
 function setEnvTarget(envId){
   const el = document.getElementById("targetM-"+envId);
-  const v = Number((el?.value)||0);
+  const v = toNumber(el?.value);
   const env = SAV_ENV.find(e=>e.id===envId);
   if(!env) return;
   env.targetM = v>0 ? v : 0;
   persist(); renderAll();
 }
 
-/* — Versement + auto-répartition selon priorité — */
+/* — Versement + auto-répartition (priorités) — */
 function ensurePriorities(envId){
   const ps = PROJ.filter(p=>p.envId===envId);
   ps.sort((a,b)=> (a.priority??Number.MAX_SAFE_INTEGER) - (b.priority??Number.MAX_SAFE_INTEGER));
   ps.forEach((p,i)=> p.priority=i);
 }
 function verserEpargne(){
-  if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
+  if(!SAV_ENV.length){ snack("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("savSelect").value;
-  const amount = Number(($("savVersement").value||0));
-  if(!amount){ alert("Montant invalide."); return; }
+  const amount = toNumber($("savVersement").value);
+  if(!amount){ snack("Montant invalide."); return; }
 
   const today = new Date().toISOString().slice(0,10);
   SAV_TX.push({id:crypto.randomUUID(),date:today,envId,amount});
   const env = SAV_ENV.find(e=>e.id===envId);
-  env.totalIn = Number(env.totalIn||0) + amount;
+  env.totalIn = toNumber(env.totalIn||0) + amount;
 
   ensurePriorities(envId);
   let remain = amount;
@@ -283,10 +321,10 @@ function verserEpargne(){
 
   for(const p of list){
     if(remain<=0) break;
-    const need = Math.max(0, Number(p.target||0) - Number(p.saved||0));
+    const need = Math.max(0, toNumber(p.target) - toNumber(p.saved));
     if(need<=0){ p.done=true; continue; }
     const take = Math.min(need, remain);
-    p.saved = Number(p.saved||0) + take;
+    p.saved = toNumber(p.saved) + take;
     PROJ_TX.push({id:crypto.randomUUID(),date:today,projectId:p.id,amount:take,envId});
     if(p.saved >= p.target){ p.done = true; }
     remain -= take;
@@ -295,18 +333,18 @@ function verserEpargne(){
   persist(); renderAll();
 }
 
-/* ========= Projets (création + priorités + drag & drop) ========= */
+/* ======= Projets ======= */
 function getNextPriority(envId){
   const ps = PROJ.filter(p=>p.envId===envId);
   if(!ps.length) return 0;
   return Math.max(...ps.map(p=> (p.priority??0))) + 1;
 }
 function addProjet(){
-  if(!SAV_ENV.length){ alert("Crée d’abord une enveloppe d’épargne."); return; }
+  if(!SAV_ENV.length){ snack("Crée d’abord une enveloppe d’épargne."); return; }
   const envId = $("projEnv").value;
   const name = ($("projNom").value||"").trim();
-  const target = Number(($("projPrix").value||0));
-  if(!name || !target){ alert("Nom et objectif requis."); return; }
+  const target = toNumber($("projPrix").value);
+  if(!name || !target){ snack("Nom et objectif requis."); return; }
   const prio = getNextPriority(envId);
   PROJ.push({id:crypto.randomUUID(),name,envId,target,saved:0,done:false,priority:prio});
   $("projNom").value=""; $("projPrix").value="";
@@ -319,7 +357,7 @@ function delProjet(id){
   if(envId) ensurePriorities(envId);
   persist(); renderAll();
 }
-function moveProject(id, dir){ // dir = -1 | +1
+function moveProject(id, dir){
   const p = PROJ.find(x=>x.id===id); if(!p) return;
   ensurePriorities(p.envId);
   const sib = PROJ.filter(x=>x.envId===p.envId).sort((a,b)=>a.priority-b.priority);
@@ -329,7 +367,7 @@ function moveProject(id, dir){ // dir = -1 | +1
   persist(); renderAll();
 }
 
-/* ---- Drag & Drop intra-enveloppe ---- */
+/* ---- Drag & Drop ---- */
 let dragState = { id:null, envId:null };
 function attachDnD(){
   document.querySelectorAll('tbody.dropzone').forEach(tbody=>{
@@ -366,24 +404,19 @@ function attachDnD(){
   });
 }
 
-/* ========= Projection & Boussole ========= */
-function monthKeysBack(n){
-  const arr=[]; const d=new Date();
-  for(let i=0;i<n;i++){ const dd=new Date(d.getFullYear(), d.getMonth()-i, 1); arr.push(dd.toISOString().slice(0,7)); }
-  return arr;
-}
+/* ======= Projection & Boussole ======= */
 function avgMonthlyForEnv(envId, monthsWindow){
   const keys = monthKeysBack(monthsWindow);
   const sums = {}; keys.forEach(k=>sums[k]=0);
   for(const t of SAV_TX){
     if(t.envId!==envId) continue;
     const k = (t.date||"").slice(0,7);
-    if (sums[k]!==undefined) sums[k] += Number(t.amount||0);
+    if (sums[k]!==undefined) sums[k] += toNumber(t.amount);
   }
   const total = keys.reduce((s,k)=> s + (sums[k]||0), 0);
   return total / keys.length;
 }
-function addMonths(d,n){ return new Date(d.getFullYear(), d.getMonth()+n, 1); }
+const addMonths = (d,n)=> new Date(d.getFullYear(), d.getMonth()+n, 1);
 function computeProjectionData(monthsWindow){
   const rowsByEnv={};
   for(const env of SAV_ENV){
@@ -392,7 +425,7 @@ function computeProjectionData(monthsWindow){
     let cursor=0;
     rowsByEnv[env.id] = { name:env.name, avg, targetM:env.targetM||0, items:[] };
     for(const p of list){
-      const remaining = Math.max(0, Number(p.target||0) - Number(p.saved||0));
+      const remaining = Math.max(0, toNumber(p.target) - toNumber(p.saved));
       if (remaining===0){ rowsByEnv[env.id].items.push({project:p.name, remaining:0, months:0, eta:new Date(), done:true}); continue; }
       if (avg<=0){ rowsByEnv[env.id].items.push({project:p.name, remaining, months:Infinity, eta:null, done:false}); continue; }
       const mNeeded = Math.ceil(remaining / avg);
@@ -406,7 +439,6 @@ function renderProjection(){
   const win = Number(($("avgMonths").value||3));
   const byEnv = computeProjectionData(win);
 
-  // tableau
   let html="";
   const ids = Object.keys(byEnv).sort((a,b)=> byEnv[a].name.localeCompare(byEnv[b].name));
   ids.forEach(id=>{
@@ -418,7 +450,7 @@ function renderProjection(){
           <div><span class="pill">Moyenne (${win}m) : ${fmt(g.avg||0)}</span></div>
           <div class="row" style="gap:6px;flex:1">
             <input id="targetM-${id}" placeholder="Objectif mensuel (DZD)" value="${SAV_ENV.find(e=>e.id===id)?.targetM||''}">
-            <button class="btn" onclick="setEnvTarget('${id}')">Fixer objectif</button>
+            <button class="btn" type="button" onclick="setEnvTarget('${id}')">Fixer objectif</button>
           </div>
         </div>
         <div class="muted">Écart (moyenne − objectif) : <strong>${fmt((g.avg||0)-(SAV_ENV.find(e=>e.id===id)?.targetM||0))}</strong></div>
@@ -450,48 +482,43 @@ function renderProjection(){
 
   // Boussole agressive
   const tips=[];
-  // 1) équilibre global sur objectifs mensuels vs cash disponible
-  const totalTargets = SAV_ENV.reduce((s,e)=> s + Number(e.targetM||0), 0);
+  const totalTargets = SAV_ENV.reduce((s,e)=> s + toNumber(e.targetM||0), 0);
   const cash = totalRevenus() - sumDepBudgets();
   if (totalTargets > cash){
     const gap = totalTargets - cash;
-    tips.push(`<p class="warn">Tes objectifs mensuels d’épargne dépassent ton cash disponible de <strong>${fmt(gap)}</strong>. 
-    → Réduis tes budgets de dépenses ou baisse provisoirement les objectifs d’enveloppes. 
-    Reco rapide: diminuer chaque objectif de <strong>${fmt(Math.ceil(gap/Math.max(1,SAV_ENV.length)))}</strong>.</p>`);
+    tips.push(`<p class="warn">Objectifs d’épargne > cash disponible de <strong>${fmt(gap)}</strong>. 
+    → Réduis des budgets ou baisse provisoirement les objectifs. Reco: -${fmt(Math.ceil(gap/Math.max(1,SAV_ENV.length)))}/mois sur chaque enveloppe.</p>`);
   }
-  // 2) enveloppes sans versement récent
   const win = Number(($("avgMonths").value||3));
   const starving = SAV_ENV.filter(e=> (avgMonthlyForEnv(e.id, win)||0)===0 && PROJ.some(p=>p.envId===e.id && !p.done));
   if (starving.length){
-    tips.push(`<p class="warn">Aucune moyenne de versement sur : ${starving.map(e=>`<strong>${e.name}</strong>`).join(", ")}. Fixe un minimum mensuel (ex: 5–10% des revenus).</p>`);
+    tips.push(`<p class="warn">Pas de versement récent sur : ${starving.map(e=>`<strong>${e.name}</strong>`).join(", ")}. Fixe un minimum (ex: 5–10% des revenus).</p>`);
   }
-  // 3) enveloppes où avg < targetM
   SAV_ENV.forEach(e=>{
     const avg = avgMonthlyForEnv(e.id, win)||0;
-    const targ = Number(e.targetM||0);
+    const targ = toNumber(e.targetM||0);
     if (targ>0 && avg < targ){
-      tips.push(`<p>Augmente <strong>${e.name}</strong> de <strong>${fmt(targ-avg)}</strong>/mois pour atteindre l’objectif défini.</p>`);
+      tips.push(`<p>Augmente <strong>${e.name}</strong> de <strong>${fmt(targ-avg)}</strong>/mois pour tenir l’objectif.</p>`);
     }
   });
-  // 4) projets > 12 mois ⇒ reco “objectif mensuel” env = somme restants / 12
   SAV_ENV.forEach(e=>{
     const list = PROJ.filter(p=>p.envId===e.id);
-    const sumRemaining = list.reduce((s,p)=> s + Math.max(0, Number(p.target||0)-Number(p.saved||0)), 0);
+    const sumRemaining = list.reduce((s,p)=> s + Math.max(0, toNumber(p.target)-toNumber(p.saved)), 0);
     if (sumRemaining>0){
       const needPerMonth = Math.ceil(sumRemaining/12);
       const avg = avgMonthlyForEnv(e.id, win)||0;
       if (avg < needPerMonth){
-        tips.push(`<p>${e.name}: pour boucler <em>tous</em> les projets ≤ 12 mois, vise <strong>${fmt(needPerMonth)}</strong>/mois (actuel: ${fmt(avg)}).</p>`);
+        tips.push(`<p>${e.name}: pour boucler tous les projets ≤ 12 mois, vise <strong>${fmt(needPerMonth)}</strong>/mois (actuel: ${fmt(avg)}).</p>`);
       }
     }
   });
   if (!tips.length){
-    tips.push(`<p class="success">Cap OK : tes objectifs sont soutenables avec tes versements actuels.</p>`);
+    tips.push(`<p class="success">Cap OK : objectifs soutenables avec tes versements actuels.</p>`);
   }
   $("compassBox").innerHTML = tips.join("");
 }
 
-/* ========= Rendering ========= */
+/* ======= Rendering ======= */
 function renderBudget(){
   const revenus = totalRevenus();
   const budgets = sumDepBudgets();
@@ -505,7 +532,6 @@ function renderBudget(){
 
   $("revenusInfo").innerHTML = `💰 Salaire : ${fmt(SALAIRE)} • ➕ Revenus sup. : ${fmt(REVENUS_SUPP)} • 📊 Total : ${fmt(revenus)}`;
 
-  // Épargne – enveloppes
   $("savBody").innerHTML = SAV_ENV.map(e=>{
     const t = e.targetM||0;
     return `
@@ -520,7 +546,6 @@ function renderBudget(){
   $("savTotal").textContent = just(totalSavAlloue());
   $("savSelect").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
 
-  // Dépenses budgétées
   $("depBody").innerHTML = DEP_ENV.map(e=>`
     <tr>
       <td>${e.name}</td>
@@ -530,15 +555,11 @@ function renderBudget(){
   `).join("");
   $("depTotal").textContent = just(sumDepBudgets());
 
-  // barre % épargne / revenus
   const ratio = revenus ? Math.min(100, Math.round((sav/revenus)*100)) : 0;
   $("barSav").style.width = ratio + "%";
 
-  // sélecteurs
   $("projEnv").innerHTML = SAV_ENV.map(e=>`<option value="${e.id}">${e.name}</option>`).join("");
 }
-
-/* --- Projets groupés + DnD --- */
 function renderProjectsGrouped(){
   const groups = {};
   for(const e of SAV_ENV){ groups[e.id] = { name:e.name, id:e.id, items:[] }; }
@@ -547,7 +568,6 @@ function renderProjectsGrouped(){
   let html = "";
   const envIds = Object.keys(groups).sort((a,b)=> groups[a].name.localeCompare(groups[b].name));
   envIds.forEach(envId=>{
-    // normalise priorités
     ensurePriorities(envId);
     const g = groups[envId];
     const items = g.items.slice().sort((a,b)=>(a.priority??0)-(b.priority??0));
@@ -557,8 +577,8 @@ function renderProjectsGrouped(){
         <thead><tr><th>Projet</th><th class="right">Objectif</th><th class="right">Épargné</th><th>Progression</th><th>Priorité</th><th></th></tr></thead>
         <tbody class="dropzone" data-env-id="${g.id}">
           ${items.map(p=>{
-            const pct = p.target ? Math.min(100, Math.round((Number(p.saved||0)/Number(p.target))*100)) : 0;
-            const status = (p.done || p.saved>=p.target) ? `<span class="success">Atteint ✅</span>` : `${pct}%`;
+            const pct = p.target ? Math.min(100, Math.round((toNumber(p.saved)/toNumber(p.target))*100)) : 0;
+            const status = (p.done || toNumber(p.saved)>=toNumber(p.target)) ? `<span class="success">Atteint ✅</span>` : `${pct}%`;
             return `
               <tr data-id="${p.id}" data-env-id="${p.envId}">
                 <td>${p.name}</td>
@@ -587,103 +607,96 @@ function renderProjectsGrouped(){
   $("projGroups").innerHTML = html;
   attachDnD();
 }
-
 function renderEpargne(){
   renderProjectsGrouped();
   renderProjection();
 }
-
 function renderAll(){
   renderBudget();
   renderEpargne();
 }
 
-/* ========= Export / Import CHIFFRÉ ========= */
-// Utils b64
-function b64enc(buf){
-  const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf);
-  let bin=""; for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]);
-  return btoa(bin);
-}
-function b64dec(b64){
-  const bin = atob(b64);
-  const len = bin.length;
-  const bytes = new Uint8Array(len);
-  for(let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i);
-  return bytes;
-}
-
+/* ======= Export / Import CHIFFRÉ ======= */
+function b64enc(buf){ const bytes = buf instanceof Uint8Array ? buf : new Uint8Array(buf); let bin=""; for(let i=0;i<bytes.length;i++) bin += String.fromCharCode(bytes[i]); return btoa(bin); }
+function b64dec(b64){ const bin = atob(b64); const len = bin.length; const bytes = new Uint8Array(len); for(let i=0;i<len;i++) bytes[i] = bin.charCodeAt(i); return bytes; }
 async function deriveKey(pass, salt, iterations=250000){
   const enc = new TextEncoder();
   const baseKey = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
   return await crypto.subtle.deriveKey(
     {name:'PBKDF2', salt, iterations, hash:'SHA-256'},
-    baseKey,
-    {name:'AES-GCM', length:256},
-    false,
-    ['encrypt','decrypt']
+    baseKey,{name:'AES-GCM', length:256},false,['encrypt','decrypt']
   );
 }
-
 async function exportEncrypted(){
   try{
     const pass = ($("expPass").value||"").trim();
-    if(!pass){ alert("Entre un mot de passe pour chiffrer."); return; }
+    if(!pass){ snack("Mot de passe requis pour l’export."); return; }
     const data = { SALAIRE, REVENUS_SUPP, SAV_ENV, SAV_TX, PROJ, PROJ_TX, DEP_ENV };
     const enc = new TextEncoder().encode(JSON.stringify(data));
     const salt = crypto.getRandomValues(new Uint8Array(16));
     const iv = crypto.getRandomValues(new Uint8Array(12));
     const key = await deriveKey(pass, salt, 250000);
     const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc);
-    const payload = {
-      v:1, alg:'AES-GCM', kdf:'PBKDF2', iter:250000,
-      salt: b64enc(salt), iv: b64enc(iv), ct: b64enc(ct)
-    };
+    const payload = { v:1, alg:'AES-GCM', kdf:'PBKDF2', iter:250000, salt:b64enc(salt), iv:b64enc(iv), ct:b64enc(ct) };
     const blob = new Blob([JSON.stringify(payload,null,2)], {type:'application/json'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href=url; a.download=`budget-secure-${new Date().toISOString().slice(0,10)}.json`;
     a.click(); URL.revokeObjectURL(url);
-    alert("Export chiffré OK.");
-  }catch(e){
-    alert("Échec export: " + e.message);
-  }
+    snack("Export chiffré OK.");
+  }catch(e){ snack("Échec export: "+e.message); }
 }
-
 async function importEncrypted(){
   try{
     const pass = ($("impPass").value||"").trim();
     const file = $("impFile").files?.[0];
-    if(!pass){ alert("Entre le mot de passe de déchiffrement."); return; }
-    if(!file){ alert("Choisis le fichier exporté."); return; }
+    if(!pass){ snack("Mot de passe de déchiffrement requis."); return; }
+    if(!file){ snack("Choisis le fichier exporté."); return; }
     const text = await file.text();
     const payload = JSON.parse(text);
     const salt = b64dec(payload.salt);
-    const iv = b64dec(payload.iv);
-    const ct = b64dec(payload.ct);
-    const key = await deriveKey(pass, salt, payload.iter||250000);
-    const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
+    const iv   = b64dec(payload.iv);
+    const ct   = b64dec(payload.ct);
+    const key  = await deriveKey(pass, salt, payload.iter||250000);
+    const pt   = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ct);
     const json = JSON.parse(new TextDecoder().decode(pt));
-    // charger
-    SALAIRE = Number(json.SALAIRE||0);
-    REVENUS_SUPP = Number(json.REVENUS_SUPP||0);
+    SALAIRE = toNumber(json.SALAIRE||0);
+    REVENUS_SUPP = toNumber(json.REVENUS_SUPP||0);
     SAV_ENV = Array.isArray(json.SAV_ENV)? json.SAV_ENV : [];
-    SAV_TX = Array.isArray(json.SAV_TX)? json.SAV_TX : [];
-    PROJ = Array.isArray(json.PROJ)? json.PROJ : [];
+    SAV_TX  = Array.isArray(json.SAV_TX)? json.SAV_TX : [];
+    PROJ    = Array.isArray(json.PROJ)? json.PROJ : [];
     PROJ_TX = Array.isArray(json.PROJ_TX)? json.PROJ_TX : [];
     DEP_ENV = Array.isArray(json.DEP_ENV)? json.DEP_ENV : [];
-    persist(); renderAll();
-    alert("Import déchiffré OK.");
-  }catch(e){
-    alert("Échec import (mot de passe ? fichier ?) : " + e.message);
-  }
+    persist(); renderAll(); snack("Import OK.");
+  }catch(e){ snack("Échec import (mot de passe ? fichier ?) : "+e.message); }
 }
 
-/* ========= Boot ========= */
+/* ======= Events ======= */
+$("btnSaveSalaire").addEventListener("click", saveSalaire);
+$("btnAddRevenu").addEventListener("click", addRevenu);
+$("btnAddSavEnv").addEventListener("click", addSavEnv);
+$("btnVerser").addEventListener("click", verserEpargne);
+$("btnAddDepEnv").addEventListener("click", ()=>{
+  const name = ($("depNom").value||"").trim();
+  const bud  = toNumber($("depMontant").value);
+  if(!name || !bud){ snack("Nom et budget requis."); return; }
+  DEP_ENV.push({id:crypto.randomUUID(),name,budget:bud});
+  $("depNom").value=""; $("depMontant").value="";
+  persist(); renderAll();
+});
+$("btnAddProjet").addEventListener("click", addProjet);
+$("btnRecalc").addEventListener("click", renderProjection);
+$("btnExport").addEventListener("click", exportEncrypted);
+$("btnImport").addEventListener("click", importEncrypted);
+
+/* ======= Boot ======= */
 (function init(){
-  // compat anciennes données
-  for(const e of SAV_ENV){ if(e.targetM===undefined) e.targetM = 0; }
-  renderAll();
+  try{
+    renderAll();
+  }catch(e){
+    console.error(e);
+    snack("Erreur d’initialisation: "+e.message);
+  }
 })();
 </script>
 </body>
